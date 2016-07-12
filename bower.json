@@ -1,0 +1,17 @@
+{
+  "name": "angular-nav-state-indicators",
+  "description": "Angular NAV module for calculating the indicators used in the state dashboard",
+  "main": "dist/bundle.js",
+  "authors": [
+    "Patricia Garcia <pat@patriciagarcia.me>"
+  ],
+  "license": "Apache 2.0",
+  "homepage": "https://github.com/fielded/angular-nav-state-indicators",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
