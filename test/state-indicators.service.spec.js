@@ -32,6 +32,15 @@ describe('state indicators service', function () {
       location: { zone: 'nc', state: 'kogi', lga: 'c' },
       stock: { 'product:a': 0, 'product:b': 0, 'product:c': 0, 'product:d': 6 },
       store: { type: 'lga' }
+    },
+    {
+      location: { zone: 'nc', state: 'kogi', lga: 'd' },
+      stock: {},
+      store: { type: 'lga' }
+    },
+    {
+      location: { zone: 'nc', state: 'kogi', lga: 'e' },
+      store: { type: 'lga' }
     }
   ]
 

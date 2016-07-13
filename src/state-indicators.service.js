@@ -109,11 +109,16 @@ class StateIndicatorsService {
       return stockCount
     }
 
+    const hasNonEmptyStock = (stockCount) => {
+      return (stockCount.stock && Object.keys(stockCount.stock).length)
+    }
+
     const decorateStockCounts = (promiseResults) => {
       lgas = promiseResults.lgas
       states = promiseResults.states
 
       return stockCounts
+              .filter(hasNonEmptyStock)
               .map(decorateStockField)
               .map(addReStockField)
               .map(addStockLevelStatusField)
