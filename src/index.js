@@ -1,6 +1,4 @@
 import angular from 'angular'
-import 'angular-nav-data'
-import 'angular-nav-thresholds'
 
 import StateIndicatorsService from './state-indicators.service'
 

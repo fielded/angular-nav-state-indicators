@@ -12,11 +12,11 @@
   "author": "Patricia Garcia <pat@patriciagarcia.me>",
   "license": "Apache 2.0",
   "dependencies": {
-    "angular": "^1.5.5",
-    "angular-nav-data": "fielded/angular-nav-data#4.0.0",
-    "angular-nav-thresholds": "fielded/angular-nav-thresholds#1.0.0"
+    "angular": "^1.5.5"
   },
   "devDependencies": {
+    "angular-nav-data": "fielded/angular-nav-data#4.0.0",
+    "angular-nav-thresholds": "fielded/angular-nav-thresholds#1.0.0",
     "angular-mocks": "^1.5.5",
     "babel-core": "^6.8.0",
     "babel-preset-es2015-rollup": "^1.1.1",
