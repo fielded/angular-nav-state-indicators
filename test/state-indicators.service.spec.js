@@ -179,6 +179,7 @@ describe('state indicators service', function () {
             'product:d': { amount: 6, status: 'overstock', allocation: -1 }
           },
           reStockNeeded: true,
+          stockLevelStatus: 'kpi-warning',
           store: { type: 'state' }
         }
       ]
