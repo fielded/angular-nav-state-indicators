@@ -96,7 +96,7 @@ class StateIndicatorsService {
     const addStockLevelStatusField = (stockCount) => {
       var understockedProducts = productsGroupedByStatus(stockCount.stock).understock.length
 
-      if (stockCount.location && stockCount.location.lga) {
+      if (stockCount.location) {
         if (understockedProducts >= this.STOCK_STATUSES.alert.threshold) {
           stockCount.stockLevelStatus = this.STOCK_STATUSES.alert.id
         } else if (understockedProducts >= this.STOCK_STATUSES.warning.threshold) {
