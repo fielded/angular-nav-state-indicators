@@ -38,6 +38,7 @@ class StateIndicatorsService {
   decorateWithIndicators (stockCounts) {
     let lgas
     let states
+    let products
 
     const getLocation = (lgas, states, stockCount) => {
       const lga = stockCount.location.lga
@@ -53,13 +54,12 @@ class StateIndicatorsService {
       const location = getLocation(lgas, states, stockCount)
       const locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount)
       const stock = stockCount.stock
-      const products = this.productListService.relevant({byType: true})
 
       const decoratedStock = Object.keys(stock).reduce((decorated, product) => {
         let amount = stock[product]
         let status
         let allocation
-        let selectedProduct = products.find(function (prod) {
+        let selectedProduct = find(products, function (prod) {
           return prod._id === product
         })
 
@@ -124,6 +124,7 @@ class StateIndicatorsService {
     const decorateStockCounts = (promiseResults) => {
       lgas = promiseResults.lgas
       states = promiseResults.states
+      products = promiseResults.products
 
       return stockCounts
               .filter(hasNonEmptyStock)
@@ -134,7 +135,8 @@ class StateIndicatorsService {
 
     let promises = {
       lgas: this.lgasService.list(),
-      states: this.statesService.list()
+      states: this.statesService.list(),
+      products: this.productListService.relevant()
     }
 
     return this.$q
@@ -143,6 +145,6 @@ class StateIndicatorsService {
   }
 }
 
-StateIndicatorsService.$inject = ['$q', 'STOCK_STATUSES', 'lgasService', 'statesService', 'thresholdsService']
+StateIndicatorsService.$inject = ['$q', 'STOCK_STATUSES', 'lgasService', 'statesService', 'thresholdsService', 'productListService']
 
 export default StateIndicatorsService
