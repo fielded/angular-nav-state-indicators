@@ -24,13 +24,15 @@ class StateIndicatorsService {
     STOCK_STATUSES,
     lgasService,
     statesService,
-    thresholdsService
+    thresholdsService,
+    productListService
   ) {
     this.$q = $q
     this.STOCK_STATUSES = STOCK_STATUSES
     this.lgasService = lgasService
     this.statesService = statesService
     this.thresholdsService = thresholdsService
+    this.productListService = productListService
   }
 
   decorateWithIndicators (stockCounts) {
@@ -51,11 +53,15 @@ class StateIndicatorsService {
       const location = getLocation(lgas, states, stockCount)
       const locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount)
       const stock = stockCount.stock
+      const products = this.productListService.relevant({byType: true})
 
       const decoratedStock = Object.keys(stock).reduce((decorated, product) => {
         let amount = stock[product]
         let status
         let allocation
+        let selectedProduct = products.find(function (prod) {
+          return prod._id === product
+        })
 
         if (locationThresholds) {
           var productThresholds = locationThresholds[product]
@@ -70,7 +76,9 @@ class StateIndicatorsService {
               status = 'ok'
             }
 
-            allocation = productThresholds.max - amount
+            const productBalance = productThresholds.max - amount
+            const unitBalance = productBalance % selectedProduct.presentation
+            allocation = unitBalance > 0 ? productBalance + (selectedProduct.presentation - unitBalance) : productBalance
           }
         }
 
