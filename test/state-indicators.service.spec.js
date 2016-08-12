@@ -20,12 +20,12 @@ describe('state indicators service', function () {
   var lgaStockCounts = [
     {
       location: { zone: 'nc', state: 'kogi', lga: 'a' },
-      stock: { 'product:a': 2, 'product:b': 2, 'product:c': 35, 'product:d': 30 },
+      stock: { 'product:a': 2, 'product:b': 3, 'product:c': 10, 'product:d': 36 },
       store: { type: 'lga' }
     },
     {
       location: { zone: 'nc', state: 'kogi', lga: 'b' },
-      stock: { 'product:a': 0, 'product:b': 2, 'product:c': 5, 'product:d': 6 },
+      stock: { 'product:a': 0, 'product:b': 0, 'product:c': 11, 'product:d': 30 },
       store: { type: 'lga' }
     },
     {
@@ -47,7 +47,7 @@ describe('state indicators service', function () {
   var stateStockCounts = [
     {
       location: { zone: 'nc', state: 'kogi' },
-      stock: { 'product:a': 0, 'product:b': 2, 'product:c': 5, 'product:d': 6 },
+      stock: { 'product:a': 0, 'product:b': 2, 'product:c': 10, 'product:d': 40 },
       store: { type: 'state' }
     }
   ]
@@ -69,24 +69,28 @@ describe('state indicators service', function () {
     }
   }
 
-  var products = {
-    'product:a': {
+  var products = [
+    {
+      _id: 'product:a',
       code: 'a',
       presentation: 1
     },
-    'product:b': {
+    {
+      _id: 'product:b',
       code: 'b',
       presentation: 5
     },
-    'product:c': {
+    {
+      _id: 'product:c',
       code: 'c',
       presentation: 10
     },
-    'product:d': {
+    {
+      _id: 'product:d',
       code: 'd',
-      presentation: 20
+      presentation: 15
     }
-  }
+  ]
 
   beforeEach(function () {
     angularNavDataMock = angular.module('angularNavData', [])
@@ -138,12 +142,12 @@ describe('state indicators service', function () {
         'product:c': {
           min: 1,
           reOrder: 2,
-          max: 50
+          max: 20
         },
         'product:d': {
           min: 1,
           reOrder: 2,
-          max: 60
+          max: 30
         }
       }
     })
@@ -156,9 +160,9 @@ describe('state indicators service', function () {
           location: { zone: 'nc', state: 'kogi', lga: 'a' },
           stock: {
             'product:a': { amount: 2, status: 're-stock', allocation: 3 },
-            'product:b': { amount: 2, status: 're-stock', allocation: 10 },
-            'product:c': { amount: 5, status: 'ok', allocation: 20 },
-            'product:d': { amount: 6, status: 'overstock', allocation: 40 }
+            'product:b': { amount: 3, status: 'ok', allocation: 10 },
+            'product:c': { amount: 10, status: 'ok', allocation: 10 },
+            'product:d': { amount: 36, status: 'overstock', allocation: -6 }
           },
           reStockNeeded: true,
           stockLevelStatus: 'kpi-ok',
@@ -168,9 +172,9 @@ describe('state indicators service', function () {
           location: { zone: 'nc', state: 'kogi', lga: 'b' },
           stock: {
             'product:a': { amount: 0, status: 'understock', allocation: 5 },
-            'product:b': { amount: 2, status: 're-stock', allocation: 10 },
-            'product:c': { amount: 5, status: 'ok', allocation: 50 },
-            'product:d': { amount: 6, status: 'overstock', allocation: 60 }
+            'product:b': { amount: 0, status: 'understock', allocation: 10 },
+            'product:c': { amount: 11, status: 'ok', allocation: 10 },
+            'product:d': { amount: 30, status: 'ok', allocation: 0 }
           },
           reStockNeeded: true,
           stockLevelStatus: 'kpi-warning',
@@ -181,8 +185,8 @@ describe('state indicators service', function () {
           stock: {
             'product:a': { amount: 0, status: 'understock', allocation: 5 },
             'product:b': { amount: 0, status: 'understock', allocation: 10 },
-            'product:c': { amount: 0, status: 'understock', allocation: 50 },
-            'product:d': { amount: 6, status: 'overstock', allocation: -20 }
+            'product:c': { amount: 0, status: 'understock', allocation: 20 },
+            'product:d': { amount: 75, status: 'overstock', allocation: -45 }
           },
           reStockNeeded: true,
           stockLevelStatus: 'kpi-alert',
@@ -205,9 +209,9 @@ describe('state indicators service', function () {
           location: { zone: 'nc', state: 'kogi' },
           stock: {
             'product:a': { amount: 0, status: 'understock', allocation: 5 },
-            'product:b': { amount: 2, status: 're-stock', allocation: 3 },
-            'product:c': { amount: 5, status: 'ok', allocation: 0 },
-            'product:d': { amount: 6, status: 'overstock', allocation: -1 }
+            'product:b': { amount: 2, status: 're-stock', allocation: 10 },
+            'product:c': { amount: 10, status: 'ok', allocation: 10 },
+            'product:d': { amount: 40, status: 'overstock', allocation: -10 }
           },
           reStockNeeded: true,
           stockLevelStatus: 'kpi-warning',
