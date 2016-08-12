@@ -77,8 +77,11 @@ class StateIndicatorsService {
             }
 
             const productBalance = productThresholds.max - amount
-            const unitBalance = productBalance % selectedProduct.presentation
-            allocation = unitBalance > 0 ? productBalance + (selectedProduct.presentation - unitBalance) : productBalance
+            allocation = productBalance
+            if (selectedProduct) {
+              const unitBalance = productBalance % selectedProduct.presentation
+              allocation = unitBalance > 0 ? productBalance + (selectedProduct.presentation - unitBalance) : productBalance
+            }
           }
         }
 
