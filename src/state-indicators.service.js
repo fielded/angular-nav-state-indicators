@@ -24,18 +24,21 @@ class StateIndicatorsService {
     STOCK_STATUSES,
     lgasService,
     statesService,
-    thresholdsService
+    thresholdsService,
+    productListService
   ) {
     this.$q = $q
     this.STOCK_STATUSES = STOCK_STATUSES
     this.lgasService = lgasService
     this.statesService = statesService
     this.thresholdsService = thresholdsService
+    this.productListService = productListService
   }
 
   decorateWithIndicators (stockCounts) {
     let lgas
     let states
+    let products
 
     const getLocation = (lgas, states, stockCount) => {
       const lga = stockCount.location.lga
@@ -56,6 +59,9 @@ class StateIndicatorsService {
         let amount = stock[product]
         let status
         let allocation
+        let selectedProduct = find(products, function (prod) {
+          return prod._id === product
+        })
 
         if (locationThresholds) {
           var productThresholds = locationThresholds[product]
@@ -70,7 +76,12 @@ class StateIndicatorsService {
               status = 'ok'
             }
 
-            allocation = productThresholds.max - amount
+            const productBalance = productThresholds.max - amount
+            allocation = productBalance
+            if (selectedProduct) {
+              const unitBalance = productBalance % selectedProduct.presentation
+              allocation = unitBalance > 0 ? productBalance + (selectedProduct.presentation - unitBalance) : productBalance
+            }
           }
         }
 
@@ -116,6 +127,7 @@ class StateIndicatorsService {
     const decorateStockCounts = (promiseResults) => {
       lgas = promiseResults.lgas
       states = promiseResults.states
+      products = promiseResults.products
 
       return stockCounts
               .filter(hasNonEmptyStock)
@@ -126,7 +138,8 @@ class StateIndicatorsService {
 
     let promises = {
       lgas: this.lgasService.list(),
-      states: this.statesService.list()
+      states: this.statesService.list(),
+      products: this.productListService.relevant()
     }
 
     return this.$q
@@ -135,6 +148,6 @@ class StateIndicatorsService {
   }
 }
 
-StateIndicatorsService.$inject = ['$q', 'STOCK_STATUSES', 'lgasService', 'statesService', 'thresholdsService']
+StateIndicatorsService.$inject = ['$q', 'STOCK_STATUSES', 'lgasService', 'statesService', 'thresholdsService', 'productListService']
 
 export default StateIndicatorsService
