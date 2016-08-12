@@ -5,7 +5,6 @@ import StateIndicatorsService from './state-indicators.service'
 angular
   .module('angularNavStateIndicators', [
     'angularNavData',
-    'angularNavThresholds',
-    'angularNavData.products'
+    'angularNavThresholds'
   ])
   .service('stateIndicatorsService', StateIndicatorsService)
