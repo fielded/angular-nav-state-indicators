@@ -101,7 +101,9 @@ describe('state indicators service', function () {
         }
       })
       .service('productListService', function ($q) {
-        return $q.when(products)
+        this.relevant = function () {
+          return $q.when(products)
+        }
       })
     testMod = angular.module('testMod', ['angularNavData', 'angularNavStateIndicators'])
     testMod.constant('STOCK_STATUSES', stockStatusesMock)
