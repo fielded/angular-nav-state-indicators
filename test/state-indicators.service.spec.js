@@ -17,6 +17,10 @@ describe('state indicators service', function () {
     { _id: 'zone:nc:state:kogi', id: 'kogi' }
   ]
 
+  var zones = [
+    { _id: 'zone:nc', id: 'nc' }
+  ]
+
   var lgaStockCounts = [
     {
       location: { zone: 'nc', state: 'kogi', lga: 'a' },
@@ -49,6 +53,14 @@ describe('state indicators service', function () {
       location: { zone: 'nc', state: 'kogi' },
       stock: { 'product:a': 0, 'product:b': 2, 'product:c': 10, 'product:d': 40 },
       store: { type: 'state' }
+    }
+  ]
+
+  var zoneStockCounts = [
+    {
+      location: { zone: 'nc' },
+      stock: { 'product:a': 0, 'product:b': 2, 'product:c': 10, 'product:d': 40 },
+      store: { type: 'zone' }
     }
   ]
 
@@ -102,6 +114,11 @@ describe('state indicators service', function () {
       .service('statesService', function ($q) {
         this.list = function () {
           return $q.when(states)
+        }
+      })
+      .service('zonesService', function ($q) {
+        this.list = function () {
+          return $q.when(zones)
         }
       })
       .service('productListService', function ($q) {
@@ -221,6 +238,29 @@ describe('state indicators service', function () {
       stateIndicatorsService.decorateWithIndicators(stateStockCounts)
         .then(function (decoratedStockCounts) {
           expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stateStockCounts[0])
+          expect(decoratedStockCounts).toEqual(expected)
+        })
+      $rootScope.$digest()
+      done()
+    })
+    it('works with zone stock counts', function (done) {
+      var expected = [
+        {
+          location: { zone: 'nc' },
+          stock: {
+            'product:a': { amount: 0, status: 'understock', allocation: 5 },
+            'product:b': { amount: 2, status: 're-stock', allocation: 10 },
+            'product:c': { amount: 10, status: 'ok', allocation: 10 },
+            'product:d': { amount: 40, status: 'overstock', allocation: -10 }
+          },
+          reStockNeeded: true,
+          stockLevelStatus: 'kpi-warning',
+          store: { type: 'zone' }
+        }
+      ]
+      stateIndicatorsService.decorateWithIndicators(zoneStockCounts)
+        .then(function (decoratedStockCounts) {
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], zoneStockCounts[0])
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
