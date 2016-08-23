@@ -144,7 +144,10 @@ describe('state indicators service', function () {
     thresholdsService = _thresholdsService_
     stateIndicatorsService = _stateIndicatorsService_
 
-    spyOn(thresholdsService, 'calculateThresholds').and.callFake(function (done) {
+    spyOn(thresholdsService, 'calculateThresholds').and.callFake(function (location) {
+      if (!location) {
+        return
+      }
       return {
         'product:a': {
           min: 1,
@@ -261,6 +264,35 @@ describe('state indicators service', function () {
       stateIndicatorsService.decorateWithIndicators(zoneStockCounts)
         .then(function (decoratedStockCounts) {
           expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], zoneStockCounts[0])
+          expect(decoratedStockCounts).toEqual(expected)
+        })
+      $rootScope.$digest()
+      done()
+    })
+    it('uses no default stockLevelStatus, status or allocation', function (done) {
+      var unknownLgaStockCount = {
+        location: { zone: 'nc', state: 'kogi', lga: 'unknown' },
+        stock: { 'product:a': 2, 'product:b': 3, 'product:c': 10, 'product:d': 20 },
+        store: { type: 'lga' }
+      }
+      var expected = [
+        {
+          location: { zone: 'nc', state: 'kogi', lga: 'unknown' },
+          stock: {
+            'product:a': { amount: 2, status: undefined, allocation: undefined },
+            'product:b': { amount: 3, status: undefined, allocation: undefined },
+            'product:c': { amount: 10, status: undefined, allocation: undefined },
+            'product:d': { amount: 20, status: undefined, allocation: undefined }
+          },
+          reStockNeeded: false,
+          stockLevelStatus: 'unknown',
+          store: { type: 'lga' }
+        }
+      ]
+
+      stateIndicatorsService.decorateWithIndicators([unknownLgaStockCount])
+        .then(function (decoratedStockCounts) {
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(undefined, unknownLgaStockCount)
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
