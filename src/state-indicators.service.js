@@ -12,9 +12,11 @@ const productsGroupedByStatus = (stock) => {
     const status = stock[product].status
     if (status) {
       grouped[status].push(product)
+    } else {
+      grouped['unknown'].push(product)
     }
     return grouped
-  }, { understock: [], 're-stock': [], ok: [], overstock: [] })
+  }, { understock: [], 're-stock': [], ok: [], overstock: [], unknown: [] })
 }
 
 // TODO: make sure stock_statuses is availalbe
@@ -111,6 +113,7 @@ class StateIndicatorsService {
     }
 
     const addStockLevelStatusField = (stockCount) => {
+      var unknownProducts = productsGroupedByStatus(stockCount.stock).unknown.length
       var understockedProducts = productsGroupedByStatus(stockCount.stock).understock.length
 
       if (stockCount.location) {
@@ -118,6 +121,8 @@ class StateIndicatorsService {
           stockCount.stockLevelStatus = this.STOCK_STATUSES.alert.id
         } else if (understockedProducts >= this.STOCK_STATUSES.warning.threshold) {
           stockCount.stockLevelStatus = this.STOCK_STATUSES.warning.id
+        } else if (unknownProducts) {
+          stockCount.stockLevelStatus = 'unknown'
         } else {
           stockCount.stockLevelStatus = this.STOCK_STATUSES.ok.id
         }
