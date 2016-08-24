@@ -12,9 +12,11 @@ const productsGroupedByStatus = (stock) => {
     const status = stock[product].status
     if (status) {
       grouped[status].push(product)
+    } else {
+      grouped['unknown'].push(product)
     }
     return grouped
-  }, { understock: [], 're-stock': [], ok: [], overstock: [] })
+  }, { understock: [], 're-stock': [], ok: [], overstock: [], unknown: [] })
 }
 
 // TODO: make sure stock_statuses is availalbe
@@ -24,6 +26,7 @@ class StateIndicatorsService {
     STOCK_STATUSES,
     lgasService,
     statesService,
+    zonesService,
     thresholdsService,
     productListService
   ) {
@@ -31,6 +34,7 @@ class StateIndicatorsService {
     this.STOCK_STATUSES = STOCK_STATUSES
     this.lgasService = lgasService
     this.statesService = statesService
+    this.zonesService = zonesService
     this.thresholdsService = thresholdsService
     this.productListService = productListService
   }
@@ -38,20 +42,24 @@ class StateIndicatorsService {
   decorateWithIndicators (stockCounts) {
     let lgas
     let states
+    let zones
     let products
 
-    const getLocation = (lgas, states, stockCount) => {
+    const getLocation = (lgas, states, zones, stockCount) => {
       const lga = stockCount.location.lga
+      const state = stockCount.location.state
       if (lga) {
         return find(lgas, (lgaDoc) => lgaDoc.id === lga)
-      } else {
-        const state = stockCount.location.state
+      } else if (state) {
         return find(states, (stateDoc) => stateDoc.id === state)
+      } else {
+        const zone = stockCount.location.zone
+        return find(zones, (zoneDoc) => zoneDoc.id === zone)
       }
     }
 
     const decorateStockField = (stockCount) => {
-      const location = getLocation(lgas, states, stockCount)
+      const location = getLocation(lgas, states, zones, stockCount)
       const locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount)
       const stock = stockCount.stock
 
@@ -105,6 +113,7 @@ class StateIndicatorsService {
     }
 
     const addStockLevelStatusField = (stockCount) => {
+      var unknownProducts = productsGroupedByStatus(stockCount.stock).unknown.length
       var understockedProducts = productsGroupedByStatus(stockCount.stock).understock.length
 
       if (stockCount.location) {
@@ -112,6 +121,8 @@ class StateIndicatorsService {
           stockCount.stockLevelStatus = this.STOCK_STATUSES.alert.id
         } else if (understockedProducts >= this.STOCK_STATUSES.warning.threshold) {
           stockCount.stockLevelStatus = this.STOCK_STATUSES.warning.id
+        } else if (unknownProducts) {
+          stockCount.stockLevelStatus = 'unknown'
         } else {
           stockCount.stockLevelStatus = this.STOCK_STATUSES.ok.id
         }
@@ -127,6 +138,7 @@ class StateIndicatorsService {
     const decorateStockCounts = (promiseResults) => {
       lgas = promiseResults.lgas
       states = promiseResults.states
+      zones = promiseResults.zones
       products = promiseResults.products
 
       return stockCounts
@@ -139,6 +151,7 @@ class StateIndicatorsService {
     let promises = {
       lgas: this.lgasService.list(),
       states: this.statesService.list(),
+      zones: this.zonesService.list(),
       products: this.productListService.relevant()
     }
 
@@ -148,6 +161,6 @@ class StateIndicatorsService {
   }
 }
 
-StateIndicatorsService.$inject = ['$q', 'STOCK_STATUSES', 'lgasService', 'statesService', 'thresholdsService', 'productListService']
+StateIndicatorsService.$inject = ['$q', 'STOCK_STATUSES', 'lgasService', 'statesService', 'zonesService', 'thresholdsService', 'productListService']
 
 export default StateIndicatorsService
