@@ -8,17 +8,17 @@ describe('state indicators service', function () {
   var testMod // eslint-disable-line
 
   var lgas = [
-    { _id: 'zone:nc:state:kogi:lga:a', id: 'a' },
-    { _id: 'zone:nc:state:kogi:lga:b', id: 'b' },
-    { _id: 'zone:nc:state:kogi:lga:c', id: 'c' }
+    { _id: 'zone:nc:state:kogi:lga:a', id: 'a', level: 'lga' },
+    { _id: 'zone:nc:state:kogi:lga:b', id: 'b', level: 'lga' },
+    { _id: 'zone:nc:state:kogi:lga:c', id: 'c', level: 'lga' }
   ]
 
   var states = [
-    { _id: 'zone:nc:state:kogi', id: 'kogi' }
+    { _id: 'zone:nc:state:kogi', id: 'kogi', level: 'state' }
   ]
 
   var zones = [
-    { _id: 'zone:nc', id: 'nc' }
+    { _id: 'zone:nc', id: 'nc', level: 'zone' }
   ]
 
   var lgaStockCounts = [
@@ -59,7 +59,7 @@ describe('state indicators service', function () {
   var zoneStockCounts = [
     {
       location: { zone: 'nc' },
-      stock: { 'product:a': 0, 'product:b': 2, 'product:c': 10, 'product:d': 40 },
+      stock: { 'product:a': 0, 'product:b': 12, 'product:c': 20, 'product:d': 40 },
       store: { type: 'zone' }
     }
   ]
@@ -144,11 +144,11 @@ describe('state indicators service', function () {
     thresholdsService = _thresholdsService_
     stateIndicatorsService = _stateIndicatorsService_
 
-    spyOn(thresholdsService, 'calculateThresholds').and.callFake(function (location) {
+    spyOn(thresholdsService, 'calculateThresholds').and.callFake(function (location, stockCount, requiredStateAllocation) {
       if (!location) {
         return
       }
-      return {
+      var thresholds = {
         'product:a': {
           min: 1,
           reOrder: 2,
@@ -170,11 +170,22 @@ describe('state indicators service', function () {
           max: 30
         }
       }
+      if (location.level === 'zone') {
+        return Object.keys(thresholds).reduce(function (zoneThresholds, product) {
+          zoneThresholds[product] = Object.keys(thresholds[product]).reduce(function (productThresholds, threshold) {
+            productThresholds[threshold] = thresholds[product][threshold] + requiredStateAllocation[product]
+            return productThresholds
+          }, {})
+          return zoneThresholds
+        }, {})
+      }
+      return thresholds
     })
   }))
 
   describe('decorate with indicators', function () {
     it('works with lga stock counts', function (done) {
+      var stockCounts = angular.copy(lgaStockCounts)
       var expected = [
         {
           location: { zone: 'nc', state: 'kogi', lga: 'a' },
@@ -213,17 +224,18 @@ describe('state indicators service', function () {
           store: { type: 'lga' }
         }
       ]
-      stateIndicatorsService.decorateWithIndicators(lgaStockCounts)
+      stateIndicatorsService.decorateWithIndicators(stockCounts)
         .then(function (decoratedStockCounts) {
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(lgas[0], lgaStockCounts[0])
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(lgas[1], lgaStockCounts[1])
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(lgas[2], lgaStockCounts[2])
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(lgas[0], stockCounts[0])
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(lgas[1], stockCounts[1])
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(lgas[2], stockCounts[2])
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
       done()
     })
     it('works with state stock counts', function (done) {
+      var stockCounts = angular.copy(stateStockCounts)
       var expected = [
         {
           location: { zone: 'nc', state: 'kogi' },
@@ -238,18 +250,27 @@ describe('state indicators service', function () {
           store: { type: 'state' }
         }
       ]
-      stateIndicatorsService.decorateWithIndicators(stateStockCounts)
+      stateIndicatorsService.decorateWithIndicators(stockCounts)
         .then(function (decoratedStockCounts) {
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stateStockCounts[0])
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stockCounts[0])
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
       done()
     })
     it('works with zone stock counts', function (done) {
+      // The required allocation for zones is the one provided by the thresholds plus
+      // the required allocation to zone state stores
+      var stockCounts = stateStockCounts.concat(zoneStockCounts)
+      var requiredByState = {
+        'product:a': 5,
+        'product:b': 10,
+        'product:c': 10,
+        'product:d': -10
+      }
       var expected = [
         {
-          location: { zone: 'nc' },
+          location: { zone: 'nc', state: 'kogi' },
           stock: {
             'product:a': { amount: 0, status: 'understock', allocation: 5 },
             'product:b': { amount: 2, status: 're-stock', allocation: 10 },
@@ -258,12 +279,25 @@ describe('state indicators service', function () {
           },
           reStockNeeded: true,
           stockLevelStatus: 'kpi-warning',
+          store: { type: 'state' }
+        },
+        {
+          location: { zone: 'nc' },
+          stock: {
+            'product:a': { amount: 0, status: 'understock', allocation: 10 },
+            'product:b': { amount: 12, status: 're-stock', allocation: 10 },
+            'product:c': { amount: 20, status: 'ok', allocation: 10 },
+            'product:d': { amount: 40, status: 'overstock', allocation: -20 }
+          },
+          reStockNeeded: true,
+          stockLevelStatus: 'kpi-warning',
           store: { type: 'zone' }
         }
       ]
-      stateIndicatorsService.decorateWithIndicators(zoneStockCounts)
+      stateIndicatorsService.decorateWithIndicators(stockCounts)
         .then(function (decoratedStockCounts) {
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], zoneStockCounts[0])
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stockCounts[0])
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], stockCounts[1], requiredByState)
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
