@@ -67,12 +67,12 @@ class StateIndicatorsService {
         let amount = stock[product]
         let status
         let allocation
-        let selectedProduct = find(products, function (prod) {
+        let selectedProduct = find(products, (prod) => {
           return prod._id === product
         })
 
         if (locationThresholds) {
-          var productThresholds = locationThresholds[product]
+          let productThresholds = locationThresholds[product]
 
           if (productThresholds) {
             status = 'overstock'
@@ -113,8 +113,8 @@ class StateIndicatorsService {
     }
 
     const addStockLevelStatusField = (stockCount) => {
-      var unknownProducts = productsGroupedByStatus(stockCount.stock).unknown.length
-      var understockedProducts = productsGroupedByStatus(stockCount.stock).understock.length
+      const unknownProducts = productsGroupedByStatus(stockCount.stock).unknown.length
+      const understockedProducts = productsGroupedByStatus(stockCount.stock).understock.length
 
       if (stockCount.location) {
         if (understockedProducts >= this.STOCK_STATUSES.alert.threshold) {
