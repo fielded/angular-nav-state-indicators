@@ -200,6 +200,10 @@ class StateIndicatorsService {
 
     stockCounts = stockCounts.filter(hasNonEmptyStock)
 
+    if (!stockCounts.length) {
+      return this.$q.when(stockCounts)
+    }
+
     let zoneStockCounts = stockCounts.filter(isZoneStockCount)
     let nonZoneStockCounts = stockCounts.filter(isNonZoneStockCount)
 
