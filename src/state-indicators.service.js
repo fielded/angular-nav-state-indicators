@@ -92,9 +92,9 @@ class StateIndicatorsService {
             }
 
             status = 'overstock'
-            if (amount <= productThresholds.min) {
+            if (amount < productThresholds.min) {
               status = 'understock'
-            } else if (amount <= productThresholds.reOrder) {
+            } else if (amount < productThresholds.reOrder) {
               status = 're-stock'
             } else if (amount <= productThresholds.max) {
               status = 'ok'
