@@ -69,9 +69,9 @@ class StateIndicatorsService {
       const location = getLocation(lgas, states, zones, stockCount)
       let locationThresholds
       if (location && location.level === 'zone') {
-        locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, requiredAllocations[location.id])
+        locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location.id])
       } else {
-        locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount)
+        locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products)
       }
       const stock = stockCount.stock
 

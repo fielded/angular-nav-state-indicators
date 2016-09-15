@@ -1,6 +1,6 @@
 {
   "name": "angular-nav-state-indicators",
-  "version": "1.2.4",
+  "version": "2.0.0",
   "description": "",
   "main": "dist/bundle.js",
   "scripts": {
@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "angular-nav-data": "fielded/angular-nav-data#4.0.0",
-    "angular-nav-thresholds": "fielded/angular-nav-thresholds#1.0.0",
+    "angular-nav-thresholds": "^2.0.0",
     "angular-mocks": "^1.5.5",
     "babel-core": "^6.8.0",
     "babel-preset-es2015-rollup": "^1.1.1",

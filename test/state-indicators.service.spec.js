@@ -144,7 +144,7 @@ describe('state indicators service', function () {
     thresholdsService = _thresholdsService_
     stateIndicatorsService = _stateIndicatorsService_
 
-    spyOn(thresholdsService, 'calculateThresholds').and.callFake(function (location, stockCount, requiredStateAllocation) {
+    spyOn(thresholdsService, 'calculateThresholds').and.callFake(function (location, stockCount, products, requiredStateAllocation) {
       if (!location) {
         return
       }
@@ -226,9 +226,9 @@ describe('state indicators service', function () {
       ]
       stateIndicatorsService.decorateWithIndicators(stockCounts)
         .then(function (decoratedStockCounts) {
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(lgas[0], stockCounts[0])
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(lgas[1], stockCounts[1])
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(lgas[2], stockCounts[2])
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(lgas[0], stockCounts[0], products)
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(lgas[1], stockCounts[1], products)
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(lgas[2], stockCounts[2], products)
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
@@ -252,7 +252,7 @@ describe('state indicators service', function () {
       ]
       stateIndicatorsService.decorateWithIndicators(stockCounts)
         .then(function (decoratedStockCounts) {
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stockCounts[0])
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stockCounts[0], products)
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
@@ -296,8 +296,8 @@ describe('state indicators service', function () {
       ]
       stateIndicatorsService.decorateWithIndicators(stockCounts)
         .then(function (decoratedStockCounts) {
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stockCounts[0])
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], stockCounts[1], requiredByState)
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stockCounts[0], products)
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], stockCounts[1], products, requiredByState)
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
@@ -326,7 +326,7 @@ describe('state indicators service', function () {
 
       stateIndicatorsService.decorateWithIndicators([unknownLgaStockCount])
         .then(function (decoratedStockCounts) {
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(undefined, unknownLgaStockCount)
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(undefined, unknownLgaStockCount, products)
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
