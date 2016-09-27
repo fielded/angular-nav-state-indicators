@@ -104,6 +104,29 @@ describe('state indicators service', function () {
     }
   ]
 
+  var thresholds = {
+    'product:a': {
+      min: 1,
+      reOrder: 2,
+      max: 5
+    },
+    'product:b': {
+      min: 1,
+      reOrder: 2,
+      max: 10
+    },
+    'product:c': {
+      min: 1,
+      reOrder: 2,
+      max: 20
+    },
+    'product:d': {
+      min: 1,
+      reOrder: 2,
+      max: 30
+    }
+  }
+
   beforeEach(function () {
     angularNavDataMock = angular.module('angularNavData', [])
       .service('lgasService', function ($q) {
@@ -148,28 +171,6 @@ describe('state indicators service', function () {
       if (!location) {
         return
       }
-      var thresholds = {
-        'product:a': {
-          min: 1,
-          reOrder: 2,
-          max: 5
-        },
-        'product:b': {
-          min: 1,
-          reOrder: 2,
-          max: 10
-        },
-        'product:c': {
-          min: 1,
-          reOrder: 2,
-          max: 20
-        },
-        'product:d': {
-          min: 1,
-          reOrder: 2,
-          max: 30
-        }
-      }
       if (location.level === 'zone') {
         return Object.keys(thresholds).reduce(function (zoneThresholds, product) {
           zoneThresholds[product] = Object.keys(thresholds[product]).reduce(function (productThresholds, threshold) {
@@ -190,10 +191,10 @@ describe('state indicators service', function () {
         {
           location: { zone: 'nc', state: 'kogi', lga: 'a' },
           stock: {
-            'product:a': { amount: 1, status: 're-stock', allocation: 4 },
-            'product:b': { amount: 3, status: 'ok', allocation: 10 },
-            'product:c': { amount: 10, status: 'ok', allocation: 10 },
-            'product:d': { amount: 36, status: 'overstock', allocation: -6 }
+            'product:a': { amount: 1, status: 're-stock', allocation: 4, thresholds: thresholds['product:a'] },
+            'product:b': { amount: 3, status: 'ok', allocation: 10, thresholds: thresholds['product:b'] },
+            'product:c': { amount: 10, status: 'ok', allocation: 10, thresholds: thresholds['product:c'] },
+            'product:d': { amount: 36, status: 'overstock', allocation: -6, thresholds: thresholds['product:d'] }
           },
           reStockNeeded: true,
           stockLevelStatus: 'kpi-ok',
@@ -202,10 +203,10 @@ describe('state indicators service', function () {
         {
           location: { zone: 'nc', state: 'kogi', lga: 'b' },
           stock: {
-            'product:a': { amount: 0, status: 'understock', allocation: 5 },
-            'product:b': { amount: 0, status: 'understock', allocation: 10 },
-            'product:c': { amount: 11, status: 'ok', allocation: 10 },
-            'product:d': { amount: 30, status: 'ok', allocation: 0 }
+            'product:a': { amount: 0, status: 'understock', allocation: 5, thresholds: thresholds['product:a'] },
+            'product:b': { amount: 0, status: 'understock', allocation: 10, thresholds: thresholds['product:b'] },
+            'product:c': { amount: 11, status: 'ok', allocation: 10, thresholds: thresholds['product:c'] },
+            'product:d': { amount: 30, status: 'ok', allocation: 0, thresholds: thresholds['product:d'] }
           },
           reStockNeeded: true,
           stockLevelStatus: 'kpi-warning',
@@ -214,10 +215,10 @@ describe('state indicators service', function () {
         {
           location: { zone: 'nc', state: 'kogi', lga: 'c' },
           stock: {
-            'product:a': { amount: 0, status: 'understock', allocation: 5 },
-            'product:b': { amount: 0, status: 'understock', allocation: 10 },
-            'product:c': { amount: 0, status: 'understock', allocation: 20 },
-            'product:d': { amount: 75, status: 'overstock', allocation: -45 }
+            'product:a': { amount: 0, status: 'understock', allocation: 5, thresholds: thresholds['product:a'] },
+            'product:b': { amount: 0, status: 'understock', allocation: 10, thresholds: thresholds['product:b'] },
+            'product:c': { amount: 0, status: 'understock', allocation: 20, thresholds: thresholds['product:c'] },
+            'product:d': { amount: 75, status: 'overstock', allocation: -45, thresholds: thresholds['product:d'] }
           },
           reStockNeeded: true,
           stockLevelStatus: 'kpi-alert',
@@ -240,10 +241,10 @@ describe('state indicators service', function () {
         {
           location: { zone: 'nc', state: 'kogi' },
           stock: {
-            'product:a': { amount: 0, status: 'understock', allocation: 5 },
-            'product:b': { amount: 1, status: 're-stock', allocation: 10 },
-            'product:c': { amount: 10, status: 'ok', allocation: 10 },
-            'product:d': { amount: 40, status: 'overstock', allocation: -10 }
+            'product:a': { amount: 0, status: 'understock', allocation: 5, thresholds: thresholds['product:a'] },
+            'product:b': { amount: 1, status: 're-stock', allocation: 10, thresholds: thresholds['product:b'] },
+            'product:c': { amount: 10, status: 'ok', allocation: 10, thresholds: thresholds['product:c'] },
+            'product:d': { amount: 40, status: 'overstock', allocation: -10, thresholds: thresholds['product:d'] }
           },
           reStockNeeded: true,
           stockLevelStatus: 'kpi-warning',
@@ -268,14 +269,20 @@ describe('state indicators service', function () {
         'product:c': 10,
         'product:d': -10
       }
+      var expectedZoneThresholds = {
+        'product:a': { min: 6, reOrder: 7, max: 10 },
+        'product:b': { min: 11, reOrder: 12, max: 20 },
+        'product:c': { min: 11, reOrder: 12, max: 30 },
+        'product:d': { min: -9, reOrder: -8, max: 20 }
+      }
       var expected = [
         {
           location: { zone: 'nc', state: 'kogi' },
           stock: {
-            'product:a': { amount: 0, status: 'understock', allocation: 5 },
-            'product:b': { amount: 1, status: 're-stock', allocation: 10 },
-            'product:c': { amount: 10, status: 'ok', allocation: 10 },
-            'product:d': { amount: 40, status: 'overstock', allocation: -10 }
+            'product:a': { amount: 0, status: 'understock', allocation: 5, thresholds: thresholds['product:a'] },
+            'product:b': { amount: 1, status: 're-stock', allocation: 10, thresholds: thresholds['product:b'] },
+            'product:c': { amount: 10, status: 'ok', allocation: 10, thresholds: thresholds['product:c'] },
+            'product:d': { amount: 40, status: 'overstock', allocation: -10, thresholds: thresholds['product:d'] }
           },
           reStockNeeded: true,
           stockLevelStatus: 'kpi-warning',
@@ -284,10 +291,10 @@ describe('state indicators service', function () {
         {
           location: { zone: 'nc' },
           stock: {
-            'product:a': { amount: 0, status: 'understock', allocation: 10 },
-            'product:b': { amount: 11, status: 're-stock', allocation: 10 },
-            'product:c': { amount: 20, status: 'ok', allocation: 10 },
-            'product:d': { amount: 40, status: 'overstock', allocation: -20 }
+            'product:a': { amount: 0, status: 'understock', allocation: 10, thresholds: expectedZoneThresholds['product:a'] },
+            'product:b': { amount: 11, status: 're-stock', allocation: 10, thresholds: expectedZoneThresholds['product:b'] },
+            'product:c': { amount: 20, status: 'ok', allocation: 10, thresholds: expectedZoneThresholds['product:c'] },
+            'product:d': { amount: 40, status: 'overstock', allocation: -20, thresholds: expectedZoneThresholds['product:d'] }
           },
           reStockNeeded: true,
           stockLevelStatus: 'kpi-warning',
@@ -303,7 +310,7 @@ describe('state indicators service', function () {
       $rootScope.$digest()
       done()
     })
-    it('uses no default stockLevelStatus, status or allocation', function (done) {
+    it('uses no default stockLevelStatus, status, allocation or thresholds', function (done) {
       var unknownLgaStockCount = {
         location: { zone: 'nc', state: 'kogi', lga: 'unknown' },
         stock: { 'product:a': 2, 'product:b': 3, 'product:c': 10, 'product:d': 20 },
@@ -313,10 +320,10 @@ describe('state indicators service', function () {
         {
           location: { zone: 'nc', state: 'kogi', lga: 'unknown' },
           stock: {
-            'product:a': { amount: 2, status: undefined, allocation: undefined },
-            'product:b': { amount: 3, status: undefined, allocation: undefined },
-            'product:c': { amount: 10, status: undefined, allocation: undefined },
-            'product:d': { amount: 20, status: undefined, allocation: undefined }
+            'product:a': { amount: 2, status: undefined, allocation: undefined, thresholds: undefined },
+            'product:b': { amount: 3, status: undefined, allocation: undefined, thresholds: undefined },
+            'product:c': { amount: 10, status: undefined, allocation: undefined, thresholds: undefined },
+            'product:d': { amount: 20, status: undefined, allocation: undefined, thresholds: undefined }
           },
           reStockNeeded: false,
           stockLevelStatus: 'unknown',

@@ -79,12 +79,13 @@ class StateIndicatorsService {
         let amount = stock[product]
         let status
         let allocation
+        let productThresholds
         let selectedProduct = find(products, (prod) => {
           return prod._id === product
         })
 
         if (locationThresholds) {
-          let productThresholds = locationThresholds[product]
+          productThresholds = locationThresholds[product]
 
           if (productThresholds) {
             if (location && location.level === 'zone' && requiredAllocations && requiredAllocations[product]) {
@@ -112,7 +113,8 @@ class StateIndicatorsService {
         decorated[product] = {
           status: status,
           amount: amount,
-          allocation: allocation
+          allocation: allocation,
+          thresholds: productThresholds
         }
 
         return decorated
