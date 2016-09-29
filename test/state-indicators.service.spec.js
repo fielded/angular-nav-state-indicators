@@ -171,10 +171,13 @@ describe('state indicators service', function () {
       if (!location) {
         return
       }
-      if (location.level === 'zone') {
+      if (location.level === 'zone' && requiredStateAllocation) {
         return Object.keys(thresholds).reduce(function (zoneThresholds, product) {
           zoneThresholds[product] = Object.keys(thresholds[product]).reduce(function (productThresholds, threshold) {
-            productThresholds[threshold] = thresholds[product][threshold] + requiredStateAllocation[product]
+            productThresholds[threshold] = thresholds[product][threshold]
+            if (requiredStateAllocation[product]) {
+              productThresholds[threshold] += requiredStateAllocation[product]
+            }
             return productThresholds
           }, {})
           return zoneThresholds
@@ -262,7 +265,7 @@ describe('state indicators service', function () {
     it('works with zone stock counts', function (done) {
       // The required allocation for zones is the one provided by the thresholds plus
       // the required allocation to zone state stores
-      var stockCounts = stateStockCounts.concat(zoneStockCounts)
+      var stockCounts = angular.copy(stateStockCounts).concat(angular.copy(zoneStockCounts))
       var requiredByState = {
         'product:a': 5,
         'product:b': 10,
@@ -305,6 +308,51 @@ describe('state indicators service', function () {
         .then(function (decoratedStockCounts) {
           expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stockCounts[0], products)
           expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], stockCounts[1], products, requiredByState)
+          expect(decoratedStockCounts).toEqual(expected)
+        })
+      $rootScope.$digest()
+      done()
+    })
+    it('only considers states that need to be restocked when calculating zonal allocations', function (done) {
+      var noRestockStateStockCounts = [
+        {
+          location: { zone: 'nc', state: 'kogi' },
+          stock: { 'product:a': 5, 'product:b': 10, 'product:c': 20, 'product:d': 30 },
+          store: { type: 'state' }
+        }
+      ]
+
+      var stockCounts = noRestockStateStockCounts.concat(angular.copy(zoneStockCounts))
+      var expected = [
+        {
+          location: { zone: 'nc', state: 'kogi' },
+          stock: {
+            'product:a': { amount: 5, status: 'ok', allocation: 0, thresholds: thresholds['product:a'] },
+            'product:b': { amount: 10, status: 'ok', allocation: 0, thresholds: thresholds['product:b'] },
+            'product:c': { amount: 20, status: 'ok', allocation: 0, thresholds: thresholds['product:c'] },
+            'product:d': { amount: 30, status: 'ok', allocation: 0, thresholds: thresholds['product:d'] }
+          },
+          reStockNeeded: false,
+          stockLevelStatus: 'kpi-ok',
+          store: { type: 'state' }
+        },
+        {
+          location: { zone: 'nc' },
+          stock: {
+            'product:a': { amount: 0, status: 'understock', allocation: 5, thresholds: thresholds['product:a'] },
+            'product:b': { amount: 11, status: 'overstock', allocation: -1, thresholds: thresholds['product:b'] },
+            'product:c': { amount: 20, status: 'ok', allocation: 0, thresholds: thresholds['product:c'] },
+            'product:d': { amount: 40, status: 'overstock', allocation: -10, thresholds: thresholds['product:d'] }
+          },
+          reStockNeeded: true,
+          stockLevelStatus: 'kpi-warning',
+          store: { type: 'zone' }
+        }
+      ]
+      stateIndicatorsService.decorateWithIndicators(stockCounts)
+        .then(function (decoratedStockCounts) {
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stockCounts[0], products)
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], stockCounts[1], products, undefined)
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
