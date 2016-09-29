@@ -171,7 +171,7 @@ class StateIndicatorsService {
 
     const zoneRequiredAllocations = (stockCounts) => {
       return stockCounts.reduce((allocations, stockCount) => {
-        if (stockCount.location && stockCount.location.state && !stockCount.location.lga) {
+        if (stockCount.location && stockCount.location.state && !stockCount.location.lga && stockCount.reStockNeeded) {
           const zone = stockCount.location.zone
           allocations[zone] = allocations[zone] || {}
           allocations[zone] = sumAllocations(allocations[zone], stockCount.stock)
@@ -186,11 +186,14 @@ class StateIndicatorsService {
       zones = promiseResults.zones || [] // not available for the state dashboard
       products = promiseResults.products
 
-      nonZoneStockCounts = nonZoneStockCounts.map(decorateStockField.bind(null, null))
-      zoneStockCounts = zoneStockCounts.map(decorateStockField.bind(null, zoneRequiredAllocations(nonZoneStockCounts)))
+      nonZoneStockCounts = nonZoneStockCounts
+                            .map(decorateStockField.bind(null, null))
+                            .map(addReStockField)
+      zoneStockCounts = zoneStockCounts
+                            .map(decorateStockField.bind(null, zoneRequiredAllocations(nonZoneStockCounts)))
+                            .map(addReStockField)
 
       return nonZoneStockCounts.concat(zoneStockCounts)
-              .map(addReStockField)
               .map(addStockLevelStatusField)
     }
 
