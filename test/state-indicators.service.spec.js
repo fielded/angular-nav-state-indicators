@@ -151,6 +151,9 @@ describe('state indicators service', function () {
       })
     testMod = angular.module('testMod', ['angularNavData', 'angularNavStateIndicators'])
     testMod.constant('STOCK_STATUSES', stockStatusesMock)
+    testMod.value('ngSmartIdPatterns', {
+      locationId: 'zone:?state:?lga'
+    })
   })
 
   beforeEach(module('testMod'))
@@ -186,6 +189,78 @@ describe('state indicators service', function () {
       return thresholds
     })
   }))
+  describe('stateRequiredAllocationsByZone', function () {
+    it('adds up the required allocations for zone states', function () {
+      var decoratedStockCounts = [
+        {
+          location: { zone: 'foo', state: 'x' },
+          stock: {
+            'product:a': { allocation: 1 },
+            'product:b': { allocation: 1 },
+            'product:c': { allocation: 2 },
+            'product:d': { allocation: 2 }
+          },
+          reStockNeeded: true
+        },
+        {
+          location: { zone: 'foo', state: 'x', lga: 'a' },
+          stock: {
+            'product:a': { allocation: 3 },
+            'product:b': { allocation: 3 },
+            'product:c': { allocation: 4 },
+            'product:d': { allocation: 4 }
+          },
+          reStockNeeded: true
+        },
+        {
+          location: { zone: 'foo', state: 'y' },
+          stock: {
+            'product:a': { allocation: 5 },
+            'product:b': { allocation: 5 },
+            'product:c': { allocation: 6 },
+            'product:d': { allocation: 6 }
+          },
+          reStockNeeded: true
+        },
+        {
+          location: { zone: 'foo', state: 'z' },
+          stock: {
+            'product:a': { allocation: 1 },
+            'product:b': { allocation: 1 },
+            'product:c': { allocation: 1 },
+            'product:d': { allocation: 1 }
+          },
+          reStockNeeded: false
+        },
+        {
+          location: { zone: 'bar', state: 'w' },
+          stock: {
+            'product:a': { allocation: 7 },
+            'product:b': { allocation: 7 },
+            'product:c': { allocation: 8 },
+            'product:d': { allocation: 8 }
+          },
+          reStockNeeded: true
+        }
+      ]
+      var expected = {
+        'zone:foo': {
+          'product:a': 6,
+          'product:b': 6,
+          'product:c': 8,
+          'product:d': 8
+        },
+        'zone:bar': {
+          'product:a': 7,
+          'product:b': 7,
+          'product:c': 8,
+          'product:d': 8
+        }
+      }
+      var required = stateIndicatorsService.stateRequiredAllocationsByZone(decoratedStockCounts)
+      expect(required).toEqual(expected)
+    })
+  })
 
   describe('decorate with indicators', function () {
     it('works with lga stock counts', function (done) {
