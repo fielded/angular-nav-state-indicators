@@ -19,10 +19,19 @@ const productsGroupedByStatus = (stock) => {
   }, { understock: [], 're-stock': [], ok: [], overstock: [], unknown: [] })
 }
 
+const sumAllocations = (sum, stock) => {
+  return Object.keys(stock).reduce((total, product) => {
+    total[product] = total[product] || 0
+    total[product] += stock[product].allocation
+    return total
+  }, sum)
+}
+
 // TODO: make sure stock_statuses is availalbe
 class StateIndicatorsService {
   constructor (
     $q,
+    smartId,
     STOCK_STATUSES,
     lgasService,
     statesService,
@@ -31,12 +40,24 @@ class StateIndicatorsService {
     productListService
   ) {
     this.$q = $q
+    this.smartId = smartId
     this.STOCK_STATUSES = STOCK_STATUSES
     this.lgasService = lgasService
     this.statesService = statesService
     this.zonesService = zonesService
     this.thresholdsService = thresholdsService
     this.productListService = productListService
+  }
+
+  stateRequiredAllocationsByZone (stockCounts) {
+    return stockCounts.reduce((allocations, stockCount) => {
+      if (stockCount.location && stockCount.location.state && !stockCount.location.lga && stockCount.reStockNeeded) {
+        const zone = this.smartId.idify({ zone: stockCount.location.zone }, 'locationId')
+        allocations[zone] = allocations[zone] || {}
+        allocations[zone] = sumAllocations(allocations[zone], stockCount.stock)
+      }
+      return allocations
+    }, {})
   }
 
   decorateWithIndicators (stockCounts) {
@@ -62,7 +83,7 @@ class StateIndicatorsService {
       const location = getLocation(lgas, states, zones, stockCount)
       let locationThresholds
       if (location && location.level === 'zone') {
-        locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location.id])
+        locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location._id])
       } else {
         locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products)
       }
@@ -164,25 +185,6 @@ class StateIndicatorsService {
       return !isZoneStockCount(stockCount)
     }
 
-    const sumAllocations = (sum, stock) => {
-      return Object.keys(stock).reduce((total, product) => {
-        total[product] = total[product] || 0
-        total[product] += stock[product].allocation
-        return total
-      }, sum)
-    }
-
-    const zoneRequiredAllocations = (stockCounts) => {
-      return stockCounts.reduce((allocations, stockCount) => {
-        if (stockCount.location && stockCount.location.state && !stockCount.location.lga && stockCount.reStockNeeded) {
-          const zone = stockCount.location.zone
-          allocations[zone] = allocations[zone] || {}
-          allocations[zone] = sumAllocations(allocations[zone], stockCount.stock)
-        }
-        return allocations
-      }, {})
-    }
-
     const decorateStockCounts = (nonZoneStockCounts, zoneStockCounts, promiseResults) => {
       lgas = promiseResults.lgas
       states = promiseResults.states
@@ -193,7 +195,7 @@ class StateIndicatorsService {
                             .map(decorateStockField.bind(null, null))
                             .map(addReStockField)
       zoneStockCounts = zoneStockCounts
-                            .map(decorateStockField.bind(null, zoneRequiredAllocations(nonZoneStockCounts)))
+                            .map(decorateStockField.bind(null, this.stateRequiredAllocationsByZone(nonZoneStockCounts)))
                             .map(addReStockField)
 
       return nonZoneStockCounts.concat(zoneStockCounts)
@@ -225,6 +227,6 @@ class StateIndicatorsService {
   }
 }
 
-StateIndicatorsService.$inject = ['$q', 'STOCK_STATUSES', 'lgasService', 'statesService', 'zonesService', 'thresholdsService', 'productListService']
+StateIndicatorsService.$inject = ['$q', 'smartId', 'STOCK_STATUSES', 'lgasService', 'statesService', 'zonesService', 'thresholdsService', 'productListService']
 
 export default StateIndicatorsService
