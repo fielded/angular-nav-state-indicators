@@ -1,1 +1,280 @@
-!function(t){"use strict";t="default"in t?t.default:t;var e="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol?"symbol":typeof t},n=function(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")},r=function(){function t(t,e){for(var n=0;n<e.length;n++){var r=e[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(t,r.key,r)}}return function(e,n,r){return n&&t(e.prototype,n),r&&t(e,r),e}}(),o=function(t,e){for(var n=0;n<t.length;n++)if(e(t[n]))return t[n]},i=function(t){return Object.keys(t).reduce(function(e,n){var r=t[n].status;return r?e[r].push(n):e.unknown.push(n),e},{understock:[],"re-stock":[],ok:[],overstock:[],unknown:[]})},c=function(){function t(e,r,o,i,c,u,s){n(this,t),this.$q=e,this.STOCK_STATUSES=r,this.lgasService=o,this.statesService=i,this.zonesService=c,this.thresholdsService=u,this.productListService=s}return r(t,[{key:"decorateWithIndicators",value:function(t){var n=this,r=void 0,c=void 0,u=void 0,s=void 0,a=function(t,n,r,i){var c=i.location.lga,u=i.location.state;if(c)return o(t,function(t){return t.id===c});if(u)return o(n,function(t){return t.id===u});var s=function(){var t=i.location.zone;return{v:o(r,function(e){return e.id===t})}}();return"object"===("undefined"==typeof s?"undefined":e(s))?s.v:void 0},l=function(t,e){return Object.keys(t).reduce(function(t,n){return t[n]+=e,t},t)},f=function(t,e){var i=a(r,c,u,e),f=void 0;f=i&&"zone"===i.level?n.thresholdsService.calculateThresholds(i,e,s,t[i.id]):n.thresholdsService.calculateThresholds(i,e,s);var v=e.stock,d=Object.keys(v).reduce(function(e,n){var r=v[n],c=void 0,u=void 0,a=void 0,d=o(s,function(t){return t._id===n});if(f&&(a=f[n])){i&&"zone"===i.level&&t&&t[n]&&(a=l(a,t[n])),c="overstock",r<a.min?c="understock":r<a.reOrder?c="re-stock":r<=a.max&&(c="ok");var S=a.max-r;if(u=S,d){var h=S%d.presentation;u=h>0?S+(d.presentation-h):S}}return e[n]={status:c,amount:r,allocation:u,thresholds:a},e},{});return e.stock=d,e},v=function(t){var e=i(t.stock);return t.reStockNeeded=!!(e.understock.length+e["re-stock"].length),t},d=function(t){var e=i(t.stock).unknown.length,r=i(t.stock).understock.length;return t.location&&(r>=n.STOCK_STATUSES.alert.threshold?t.stockLevelStatus=n.STOCK_STATUSES.alert.id:r>=n.STOCK_STATUSES.warning.threshold?t.stockLevelStatus=n.STOCK_STATUSES.warning.id:e?t.stockLevelStatus="unknown":t.stockLevelStatus=n.STOCK_STATUSES.ok.id),t},S=function(t){return t.stock&&Object.keys(t.stock).length},h=function(t){return t.location&&t.location.zone&&!t.location.state},k=function(t){return!h(t)},T=function(t,e){return Object.keys(e).reduce(function(t,n){return t[n]=t[n]||0,t[n]+=e[n].allocation,t},t)},g=function(t){return t.reduce(function(t,e){if(e.location&&e.location.state&&!e.location.lga){var n=e.location.zone;t[n]=t[n]||{},t[n]=T(t[n],e.stock)}return t},{})},p=function(t,e,n){return r=n.lgas,c=n.states,u=n.zones||[],s=n.products,t=t.map(f.bind(null,null)),e=e.map(f.bind(null,g(t))),t.concat(e).map(v).map(d)},y={lgas:this.lgasService.list(),states:this.statesService.list(),products:this.productListService.relevant()};if(t=t.filter(S),!t.length)return this.$q.when(t);var b=t.filter(h),m=t.filter(k);return b.length&&(y.zones=this.zonesService.list()),this.$q.all(y).then(p.bind(null,m,b))}}]),t}();c.$inject=["$q","STOCK_STATUSES","lgasService","statesService","zonesService","thresholdsService","productListService"],t.module("angularNavStateIndicators",["angularNavData","angularNavThresholds"]).service("stateIndicatorsService",c)}(angular);
+(function (angular) {
+  'use strict';
+
+  angular = 'default' in angular ? angular['default'] : angular;
+
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+  };
+
+  var classCallCheck = function (instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  };
+
+  var createClass = function () {
+    function defineProperties(target, props) {
+      for (var i = 0; i < props.length; i++) {
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+      }
+    }
+
+    return function (Constructor, protoProps, staticProps) {
+      if (protoProps) defineProperties(Constructor.prototype, protoProps);
+      if (staticProps) defineProperties(Constructor, staticProps);
+      return Constructor;
+    };
+  }();
+
+  var find = function find(list, match) {
+    for (var i = 0; i < list.length; i++) {
+      if (match(list[i])) {
+        return list[i];
+      }
+    }
+    return undefined;
+  };
+
+  var productsGroupedByStatus = function productsGroupedByStatus(stock) {
+    return Object.keys(stock).reduce(function (grouped, product) {
+      var status = stock[product].status;
+      if (status) {
+        grouped[status].push(product);
+      } else {
+        grouped['unknown'].push(product);
+      }
+      return grouped;
+    }, { understock: [], 're-stock': [], ok: [], overstock: [], unknown: [] });
+  };
+
+  var sumAllocations = function sumAllocations(sum, stock) {
+    return Object.keys(stock).reduce(function (total, product) {
+      total[product] = total[product] || 0;
+      if (stock[product].allocation > 0) {
+        total[product] += stock[product].allocation;
+      }
+      return total;
+    }, sum);
+  };
+
+  // TODO: make sure stock_statuses is availalbe
+
+  var StateIndicatorsService = function () {
+    function StateIndicatorsService($q, smartId, STOCK_STATUSES, lgasService, statesService, zonesService, thresholdsService, productListService) {
+      classCallCheck(this, StateIndicatorsService);
+
+      this.$q = $q;
+      this.smartId = smartId;
+      this.STOCK_STATUSES = STOCK_STATUSES;
+      this.lgasService = lgasService;
+      this.statesService = statesService;
+      this.zonesService = zonesService;
+      this.thresholdsService = thresholdsService;
+      this.productListService = productListService;
+    }
+
+    createClass(StateIndicatorsService, [{
+      key: 'stateRequiredAllocationsByZone',
+      value: function stateRequiredAllocationsByZone(stockCounts) {
+        var _this = this;
+
+        return stockCounts.reduce(function (allocations, stockCount) {
+          if (stockCount.location && stockCount.location.state && !stockCount.location.lga && stockCount.reStockNeeded) {
+            var zone = _this.smartId.idify({ zone: stockCount.location.zone }, 'locationId');
+            allocations[zone] = allocations[zone] || {};
+            allocations[zone] = sumAllocations(allocations[zone], stockCount.stock);
+          }
+          return allocations;
+        }, {});
+      }
+    }, {
+      key: 'decorateWithIndicators',
+      value: function decorateWithIndicators(stockCounts) {
+        var _this2 = this;
+
+        var lgas = void 0;
+        var states = void 0;
+        var zones = void 0;
+        var products = void 0;
+
+        var getLocation = function getLocation(lgas, states, zones, stockCount) {
+          var lga = stockCount.location.lga;
+          var state = stockCount.location.state;
+          if (lga) {
+            return find(lgas, function (lgaDoc) {
+              return lgaDoc.id === lga;
+            });
+          } else if (state) {
+            return find(states, function (stateDoc) {
+              return stateDoc.id === state;
+            });
+          } else {
+            var _ret = function () {
+              var zone = stockCount.location.zone;
+              return {
+                v: find(zones, function (zoneDoc) {
+                  return zoneDoc.id === zone;
+                })
+              };
+            }();
+
+            if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+          }
+        };
+
+        var decorateStockField = function decorateStockField(requiredAllocations, stockCount) {
+          var location = getLocation(lgas, states, zones, stockCount);
+          var locationThresholds = void 0;
+          if (location && location.level === 'zone') {
+            locationThresholds = _this2.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location._id]);
+          } else {
+            locationThresholds = _this2.thresholdsService.calculateThresholds(location, stockCount, products);
+          }
+          var stock = stockCount.stock;
+
+          var decoratedStock = Object.keys(stock).reduce(function (decorated, product) {
+            var amount = stock[product];
+            var status = void 0;
+            var allocation = void 0;
+            var productThresholds = void 0;
+            var selectedProduct = find(products, function (prod) {
+              return prod._id === product;
+            });
+
+            if (locationThresholds) {
+              productThresholds = locationThresholds[product];
+
+              if (productThresholds) {
+                status = 'overstock';
+                if (amount < productThresholds.min) {
+                  status = 'understock';
+                } else if (amount < productThresholds.reOrder) {
+                  status = 're-stock';
+                } else if (amount <= productThresholds.max) {
+                  status = 'ok';
+                }
+
+                var productBalance = productThresholds.max - amount;
+                allocation = productBalance;
+                if (selectedProduct) {
+                  var unitBalance = productBalance % selectedProduct.presentation;
+                  allocation = unitBalance > 0 ? productBalance + (selectedProduct.presentation - unitBalance) : productBalance;
+                }
+              }
+            }
+
+            decorated[product] = {
+              status: status,
+              amount: amount,
+              allocation: allocation,
+              thresholds: productThresholds
+            };
+
+            return decorated;
+          }, {});
+
+          stockCount.stock = decoratedStock;
+          return stockCount;
+        };
+
+        var addReStockField = function addReStockField(stockCount) {
+          var addAllocationIfPositive = function addAllocationIfPositive(sum, productId) {
+            if (stockCount.stock[productId].allocation > 0) {
+              sum = sum + stockCount.stock[productId].allocation;
+            }
+            return sum;
+          };
+
+          if (stockCount.location && stockCount.location.lga) {
+            var groupedByStatus = productsGroupedByStatus(stockCount.stock);
+            stockCount.reStockNeeded = !!(groupedByStatus.understock.length + groupedByStatus['re-stock'].length);
+          } else {
+            // states and zones
+            if (stockCount.stock) {
+              var sumOfPositiveAllocations = Object.keys(stockCount.stock).reduce(addAllocationIfPositive, 0);
+              stockCount.reStockNeeded = sumOfPositiveAllocations > 0;
+            }
+          }
+          return stockCount;
+        };
+
+        var addStockLevelStatusField = function addStockLevelStatusField(stockCount) {
+          var unknownProducts = productsGroupedByStatus(stockCount.stock).unknown.length;
+          var understockedProducts = productsGroupedByStatus(stockCount.stock).understock.length;
+
+          if (stockCount.location) {
+            if (understockedProducts >= _this2.STOCK_STATUSES.alert.threshold) {
+              stockCount.stockLevelStatus = _this2.STOCK_STATUSES.alert.id;
+            } else if (understockedProducts >= _this2.STOCK_STATUSES.warning.threshold) {
+              stockCount.stockLevelStatus = _this2.STOCK_STATUSES.warning.id;
+            } else if (unknownProducts) {
+              stockCount.stockLevelStatus = 'unknown';
+            } else {
+              stockCount.stockLevelStatus = _this2.STOCK_STATUSES.ok.id;
+            }
+          }
+
+          return stockCount;
+        };
+
+        var hasNonEmptyStock = function hasNonEmptyStock(stockCount) {
+          return stockCount.stock && Object.keys(stockCount.stock).length;
+        };
+
+        var isZoneStockCount = function isZoneStockCount(stockCount) {
+          return stockCount.location && stockCount.location.zone && !stockCount.location.state;
+        };
+
+        var isNonZoneStockCount = function isNonZoneStockCount(stockCount) {
+          return !isZoneStockCount(stockCount);
+        };
+
+        var decorateStockCounts = function decorateStockCounts(nonZoneStockCounts, zoneStockCounts, promiseResults) {
+          lgas = promiseResults.lgas;
+          states = promiseResults.states;
+          zones = promiseResults.zones || []; // not available for the state dashboard
+          products = promiseResults.products;
+
+          nonZoneStockCounts = nonZoneStockCounts.map(decorateStockField.bind(null, null)).map(addReStockField);
+          zoneStockCounts = zoneStockCounts.map(decorateStockField.bind(null, _this2.stateRequiredAllocationsByZone(nonZoneStockCounts))).map(addReStockField);
+
+          return nonZoneStockCounts.concat(zoneStockCounts).map(addStockLevelStatusField);
+        };
+
+        var promises = {
+          lgas: this.lgasService.list(),
+          states: this.statesService.list(),
+          products: this.productListService.relevant()
+        };
+
+        stockCounts = stockCounts.filter(hasNonEmptyStock);
+
+        if (!stockCounts.length) {
+          return this.$q.when(stockCounts);
+        }
+
+        var zoneStockCounts = stockCounts.filter(isZoneStockCount);
+        var nonZoneStockCounts = stockCounts.filter(isNonZoneStockCount);
+
+        if (zoneStockCounts.length) {
+          promises.zones = this.zonesService.list();
+        }
+
+        return this.$q.all(promises).then(decorateStockCounts.bind(null, nonZoneStockCounts, zoneStockCounts));
+      }
+    }]);
+    return StateIndicatorsService;
+  }();
+
+  StateIndicatorsService.$inject = ['$q', 'smartId', 'STOCK_STATUSES', 'lgasService', 'statesService', 'zonesService', 'thresholdsService', 'productListService'];
+
+  angular.module('angularNavStateIndicators', ['ngSmartId', 'angularNavData', 'angularNavThresholds']).service('stateIndicatorsService', StateIndicatorsService);
+
+}(angular));
