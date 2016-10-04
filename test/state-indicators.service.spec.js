@@ -382,7 +382,7 @@ describe('state indicators service', function () {
       stateIndicatorsService.decorateWithIndicators(stockCounts)
         .then(function (decoratedStockCounts) {
           expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stockCounts[0], products)
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], stockCounts[1], products, requiredByState)
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], stockCounts[1], products, requiredByState, { version: 'last' })
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
@@ -427,7 +427,7 @@ describe('state indicators service', function () {
       stateIndicatorsService.decorateWithIndicators(stockCounts)
         .then(function (decoratedStockCounts) {
           expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stockCounts[0], products)
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], stockCounts[1], products, undefined)
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], stockCounts[1], products, undefined, { version: 'last' })
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()

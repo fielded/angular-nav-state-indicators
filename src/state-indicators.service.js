@@ -85,7 +85,9 @@ class StateIndicatorsService {
       const location = getLocation(lgas, states, zones, stockCount)
       let locationThresholds
       if (location && location.level === 'zone') {
-        locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location._id])
+        // Temporary fix for https://github.com/fielded/nav-integrated-national-dashboard/issues/265
+        // This should be removed when https://github.com/fielded/nav-etl/issues/136 is fixed
+        locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location._id], { version: 'last' })
       } else {
         locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products)
       }
