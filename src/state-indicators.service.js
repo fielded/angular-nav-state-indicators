@@ -22,7 +22,9 @@ const productsGroupedByStatus = (stock) => {
 const sumAllocations = (sum, stock) => {
   return Object.keys(stock).reduce((total, product) => {
     total[product] = total[product] || 0
-    total[product] += stock[product].allocation
+    if (stock[product].allocation > 0) {
+      total[product] += stock[product].allocation
+    }
     return total
   }, sum)
 }
