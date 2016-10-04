@@ -133,7 +133,9 @@
           var location = getLocation(lgas, states, zones, stockCount);
           var locationThresholds = void 0;
           if (location && location.level === 'zone') {
-            locationThresholds = _this2.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location._id]);
+            // Temporary fix for https://github.com/fielded/nav-integrated-national-dashboard/issues/265
+            // This should be removed when https://github.com/fielded/nav-etl/issues/136 is fixed
+            locationThresholds = _this2.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location._id], { version: 'last' });
           } else {
             locationThresholds = _this2.thresholdsService.calculateThresholds(location, stockCount, products);
           }
