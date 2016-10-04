@@ -58,13 +58,6 @@ class StateIndicatorsService {
       }
     }
 
-    const addRequiredAllocations = (thresholds, requiredAllocation) => {
-      return Object.keys(thresholds).reduce((withAllocations, threshold) => {
-        withAllocations[threshold] += requiredAllocation
-        return withAllocations
-      }, thresholds)
-    }
-
     const decorateStockField = (requiredAllocations, stockCount) => {
       const location = getLocation(lgas, states, zones, stockCount)
       let locationThresholds
@@ -88,10 +81,6 @@ class StateIndicatorsService {
           productThresholds = locationThresholds[product]
 
           if (productThresholds) {
-            if (location && location.level === 'zone' && requiredAllocations && requiredAllocations[product]) {
-              productThresholds = addRequiredAllocations(productThresholds, requiredAllocations[product])
-            }
-
             status = 'overstock'
             if (amount < productThresholds.min) {
               status = 'understock'
