@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "angular-mocks": "^1.5.5",
+    "ng-smart-id": "github:fielded/ng-smart-id#4.0.3",
     "angular-nav-data": "fielded/angular-nav-data#4.0.0",
     "angular-nav-thresholds": "^2.0.0",
     "babel-core": "^6.8.0",
