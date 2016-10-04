@@ -171,10 +171,13 @@ describe('state indicators service', function () {
       if (!location) {
         return
       }
-      if (location.level === 'zone') {
+      if (location.level === 'zone' && requiredStateAllocation) {
         return Object.keys(thresholds).reduce(function (zoneThresholds, product) {
           zoneThresholds[product] = Object.keys(thresholds[product]).reduce(function (productThresholds, threshold) {
-            productThresholds[threshold] = thresholds[product][threshold] + requiredStateAllocation[product]
+            productThresholds[threshold] = thresholds[product][threshold]
+            if (requiredStateAllocation[product]) {
+              productThresholds[threshold] += requiredStateAllocation[product]
+            }
             return productThresholds
           }, {})
           return zoneThresholds
@@ -338,6 +341,63 @@ describe('state indicators service', function () {
         })
       $rootScope.$digest()
       done()
+    })
+    describe('reStockNeeded field', function () {
+      it('is true for lgas if any product is below reorder level', function (done) {
+        var noRestockNeeded = {
+          location: { zone: 'nc', state: 'kogi', lga: 'b' },
+          stock: { 'product:a': 3, 'product:b': 3, 'product:c': 3, 'product:d': 3 },
+          store: { type: 'lga' }
+        }
+        var stockCounts = [angular.copy(lgaStockCounts[0]), noRestockNeeded]
+        stateIndicatorsService.decorateWithIndicators(stockCounts)
+          .then(function (decoratedStockCounts) {
+            expect(decoratedStockCounts[0].reStockNeeded).toBe(true)
+            expect(decoratedStockCounts[1].reStockNeeded).toBe(false)
+          })
+        $rootScope.$digest()
+        done()
+      })
+      it('is true for states if any product is below max level', function (done) {
+        var reStockNeeded = {
+          location: { zone: 'nc', state: 'kogi' },
+          stock: { 'product:a': 4, 'product:b': 9, 'product:c': 19, 'product:d': 29 },
+          store: { type: 'state' }
+        }
+        var noRestockNeeded = {
+          location: { zone: 'nc', state: 'kogi' },
+          stock: { 'product:a': 10, 'product:b': 10, 'product:c': 20, 'product:d': 30 },
+          store: { type: 'state' }
+        }
+        var stockCounts = [reStockNeeded, noRestockNeeded]
+        stateIndicatorsService.decorateWithIndicators(stockCounts)
+          .then(function (decoratedStockCounts) {
+            expect(decoratedStockCounts[0].reStockNeeded).toBe(true)
+            expect(decoratedStockCounts[1].reStockNeeded).toBe(false)
+          })
+        $rootScope.$digest()
+        done()
+      })
+      it('is true for zones if any product is below max level', function (done) {
+        var reStockNeeded = {
+          location: { zone: 'nc' },
+          stock: { 'product:a': 4, 'product:b': 9, 'product:c': 19, 'product:d': 29 },
+          store: { type: 'zone' }
+        }
+        var noRestockNeeded = {
+          location: { zone: 'nc' },
+          stock: { 'product:a': 10, 'product:b': 10, 'product:c': 20, 'product:d': 30 },
+          store: { type: 'zone' }
+        }
+        var stockCounts = [reStockNeeded, noRestockNeeded]
+        stateIndicatorsService.decorateWithIndicators(stockCounts)
+          .then(function (decoratedStockCounts) {
+            expect(decoratedStockCounts[0].reStockNeeded).toBe(true)
+            expect(decoratedStockCounts[1].reStockNeeded).toBe(false)
+          })
+        $rootScope.$digest()
+        done()
+      })
     })
   })
 })

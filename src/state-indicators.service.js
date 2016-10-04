@@ -125,8 +125,22 @@ class StateIndicatorsService {
     }
 
     const addReStockField = (stockCount) => {
-      const groupedByStatus = productsGroupedByStatus(stockCount.stock)
-      stockCount.reStockNeeded = !!(groupedByStatus.understock.length + groupedByStatus['re-stock'].length)
+      const addAllocationIfPositive = (sum, productId) => {
+        if (stockCount.stock[productId].allocation > 0) {
+          sum = sum + stockCount.stock[productId].allocation
+        }
+        return sum
+      }
+
+      if (stockCount.location && stockCount.location.lga) {
+        const groupedByStatus = productsGroupedByStatus(stockCount.stock)
+        stockCount.reStockNeeded = !!(groupedByStatus.understock.length + groupedByStatus['re-stock'].length)
+      } else { // states and zones
+        if (stockCount.stock) {
+          const sumOfPositiveAllocations = Object.keys(stockCount.stock).reduce(addAllocationIfPositive, 0)
+          stockCount.reStockNeeded = sumOfPositiveAllocations > 0
+        }
+      }
       return stockCount
     }
 
