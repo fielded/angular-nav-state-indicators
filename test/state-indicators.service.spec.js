@@ -217,8 +217,8 @@ describe('state indicators service', function () {
           stock: {
             'product:a': { allocation: 5 },
             'product:b': { allocation: 5 },
-            'product:c': { allocation: 6 },
-            'product:d': { allocation: 6 }
+            'product:c': { allocation: -6 },
+            'product:d': { allocation: -6 }
           },
           reStockNeeded: true
         },
@@ -247,8 +247,8 @@ describe('state indicators service', function () {
         'zone:foo': {
           'product:a': 6,
           'product:b': 6,
-          'product:c': 8,
-          'product:d': 8
+          'product:c': 2,
+          'product:d': 2
         },
         'zone:bar': {
           'product:a': 7,
@@ -345,13 +345,13 @@ describe('state indicators service', function () {
         'product:a': 5,
         'product:b': 10,
         'product:c': 10,
-        'product:d': -10
+        'product:d': 0
       }
       var expectedZoneThresholds = {
         'product:a': { min: 6, reOrder: 7, max: 10 },
         'product:b': { min: 11, reOrder: 12, max: 20 },
         'product:c': { min: 11, reOrder: 12, max: 30 },
-        'product:d': { min: -9, reOrder: -8, max: 20 }
+        'product:d': { min: 1, reOrder: 2, max: 30 }
       }
       var expected = [
         {
@@ -372,7 +372,7 @@ describe('state indicators service', function () {
             'product:a': { amount: 0, status: 'understock', allocation: 10, thresholds: expectedZoneThresholds['product:a'] },
             'product:b': { amount: 11, status: 're-stock', allocation: 10, thresholds: expectedZoneThresholds['product:b'] },
             'product:c': { amount: 20, status: 'ok', allocation: 10, thresholds: expectedZoneThresholds['product:c'] },
-            'product:d': { amount: 40, status: 'overstock', allocation: -20, thresholds: expectedZoneThresholds['product:d'] }
+            'product:d': { amount: 40, status: 'overstock', allocation: -10, thresholds: expectedZoneThresholds['product:d'] }
           },
           reStockNeeded: true,
           stockLevelStatus: 'kpi-warning',
