@@ -7,16 +7,18 @@ const find = (list, match) => {
   return undefined
 }
 
-const productsGroupedByStatus = (stock) => {
-  return Object.keys(stock).reduce((grouped, product) => {
-    const status = stock[product].status
+const productsGroupedByStatus = (stock, products) => {
+  return Object.keys(stock).reduce((grouped, productId) => {
+    const isRelevant = !!find(products, (product) => product._id === productId)
+    const status = stock[productId].status
+    if (!isRelevant) {
+      return grouped
+    }
     if (status) {
-      grouped[status].push(product)
-    } else {
-      grouped['unknown'].push(product)
+      grouped[status].push(productId)
     }
     return grouped
-  }, { understock: [], 're-stock': [], ok: [], overstock: [], unknown: [] })
+  }, { understock: [], 're-stock': [], ok: [], overstock: [] })
 }
 
 const sumAllocations = (sum, stock) => {
@@ -147,7 +149,7 @@ class StateIndicatorsService {
       }
 
       if (stockCount.location && stockCount.location.lga) {
-        const groupedByStatus = productsGroupedByStatus(stockCount.stock)
+        const groupedByStatus = productsGroupedByStatus(stockCount.stock, products)
         stockCount.reStockNeeded = !!(groupedByStatus.understock.length + groupedByStatus['re-stock'].length)
       } else { // states and zones
         if (stockCount.stock) {
@@ -159,17 +161,17 @@ class StateIndicatorsService {
     }
 
     const addStockLevelStatusField = (stockCount) => {
-      const unknownProducts = productsGroupedByStatus(stockCount.stock).unknown.length
-      const understockedProducts = productsGroupedByStatus(stockCount.stock).understock.length
+      const grouped = productsGroupedByStatus(stockCount.stock, products)
+      const understockedProducts = grouped.understock.length
+      const totalGrouped = Object.keys(grouped).reduce((sum, group) => sum + grouped[group].length, 0)
 
+      stockCount.stockLevelStatus = 'unknown'
       if (stockCount.location) {
         if (understockedProducts >= this.STOCK_STATUSES.alert.threshold) {
           stockCount.stockLevelStatus = this.STOCK_STATUSES.alert.id
         } else if (understockedProducts >= this.STOCK_STATUSES.warning.threshold) {
           stockCount.stockLevelStatus = this.STOCK_STATUSES.warning.id
-        } else if (unknownProducts) {
-          stockCount.stockLevelStatus = 'unknown'
-        } else {
+        } else if (totalGrouped > 0) {
           stockCount.stockLevelStatus = this.STOCK_STATUSES.ok.id
         }
       }
