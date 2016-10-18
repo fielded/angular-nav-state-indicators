@@ -3,7 +3,9 @@
 describe('state indicators service', function () {
   var stateIndicatorsService
   var thresholdsService
+  var productListService
   var $rootScope
+  var $q
   var angularNavDataMock // eslint-disable-line
   var testMod // eslint-disable-line
 
@@ -159,6 +161,7 @@ describe('state indicators service', function () {
   beforeEach(module('testMod'))
 
   beforeEach(inject(function (
+    _$q_,
     _$rootScope_,
     _lgasService_,
     _statesService_,
@@ -167,7 +170,9 @@ describe('state indicators service', function () {
     _productListService_
   ) {
     $rootScope = _$rootScope_
+    $q = _$q_
     thresholdsService = _thresholdsService_
+    productListService = _productListService_
     stateIndicatorsService = _stateIndicatorsService_
 
     spyOn(thresholdsService, 'calculateThresholds').and.callFake(function (location, stockCount, products, requiredStateAllocation) {
@@ -434,6 +439,9 @@ describe('state indicators service', function () {
       done()
     })
     it('uses no default stockLevelStatus, status, allocation or thresholds', function (done) {
+      spyOn(productListService, 'relevant').and.callFake(function () {
+        return $q.when([])
+      })
       var unknownLgaStockCount = {
         location: { zone: 'nc', state: 'kogi', lga: 'unknown' },
         stock: { 'product:a': 2, 'product:b': 3, 'product:c': 10, 'product:d': 20 },
@@ -456,7 +464,7 @@ describe('state indicators service', function () {
 
       stateIndicatorsService.decorateWithIndicators([unknownLgaStockCount])
         .then(function (decoratedStockCounts) {
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(undefined, unknownLgaStockCount, products)
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(undefined, unknownLgaStockCount, [])
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
