@@ -42,16 +42,20 @@
     return undefined;
   };
 
-  var productsGroupedByStatus = function productsGroupedByStatus(stock) {
-    return Object.keys(stock).reduce(function (grouped, product) {
-      var status = stock[product].status;
+  var productsGroupedByStatus = function productsGroupedByStatus(stock, products) {
+    return Object.keys(stock).reduce(function (grouped, productId) {
+      var isRelevant = !!find(products, function (product) {
+        return product._id === productId;
+      });
+      var status = stock[productId].status;
+      if (!isRelevant) {
+        return grouped;
+      }
       if (status) {
-        grouped[status].push(product);
-      } else {
-        grouped['unknown'].push(product);
+        grouped[status].push(productId);
       }
       return grouped;
-    }, { understock: [], 're-stock': [], ok: [], overstock: [], unknown: [] });
+    }, { understock: [], 're-stock': [], ok: [], overstock: [] });
   };
 
   var sumAllocations = function sumAllocations(sum, stock) {
@@ -195,7 +199,7 @@
           };
 
           if (stockCount.location && stockCount.location.lga) {
-            var groupedByStatus = productsGroupedByStatus(stockCount.stock);
+            var groupedByStatus = productsGroupedByStatus(stockCount.stock, products);
             stockCount.reStockNeeded = !!(groupedByStatus.understock.length + groupedByStatus['re-stock'].length);
           } else {
             // states and zones
@@ -208,17 +212,19 @@
         };
 
         var addStockLevelStatusField = function addStockLevelStatusField(stockCount) {
-          var unknownProducts = productsGroupedByStatus(stockCount.stock).unknown.length;
-          var understockedProducts = productsGroupedByStatus(stockCount.stock).understock.length;
+          var grouped = productsGroupedByStatus(stockCount.stock, products);
+          var understockedProducts = grouped.understock.length;
+          var totalGrouped = Object.keys(grouped).reduce(function (sum, group) {
+            return sum + grouped[group].length;
+          }, 0);
 
+          stockCount.stockLevelStatus = 'unknown';
           if (stockCount.location) {
             if (understockedProducts >= _this2.STOCK_STATUSES.alert.threshold) {
               stockCount.stockLevelStatus = _this2.STOCK_STATUSES.alert.id;
             } else if (understockedProducts >= _this2.STOCK_STATUSES.warning.threshold) {
               stockCount.stockLevelStatus = _this2.STOCK_STATUSES.warning.id;
-            } else if (unknownProducts) {
-              stockCount.stockLevelStatus = 'unknown';
-            } else {
+            } else if (totalGrouped > 0) {
               stockCount.stockLevelStatus = _this2.STOCK_STATUSES.ok.id;
             }
           }
