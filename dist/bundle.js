@@ -3,35 +3,11 @@
 
   angular = 'default' in angular ? angular['default'] : angular;
 
-  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-    return typeof obj;
-  } : function (obj) {
-    return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
-  };
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-  var classCallCheck = function (instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
-    }
-  };
+  var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-  var createClass = function () {
-    function defineProperties(target, props) {
-      for (var i = 0; i < props.length; i++) {
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
-      }
-    }
-
-    return function (Constructor, protoProps, staticProps) {
-      if (protoProps) defineProperties(Constructor.prototype, protoProps);
-      if (staticProps) defineProperties(Constructor, staticProps);
-      return Constructor;
-    };
-  }();
+  function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
   var find = function find(list, match) {
     for (var i = 0; i < list.length; i++) {
@@ -72,7 +48,7 @@
 
   var StateIndicatorsService = function () {
     function StateIndicatorsService($q, smartId, STOCK_STATUSES, lgasService, statesService, zonesService, thresholdsService, productListService) {
-      classCallCheck(this, StateIndicatorsService);
+      _classCallCheck(this, StateIndicatorsService);
 
       this.$q = $q;
       this.smartId = smartId;
@@ -84,7 +60,7 @@
       this.productListService = productListService;
     }
 
-    createClass(StateIndicatorsService, [{
+    _createClass(StateIndicatorsService, [{
       key: 'stateRequiredAllocationsByZone',
       value: function stateRequiredAllocationsByZone(stockCounts) {
         var _this = this;
@@ -137,9 +113,7 @@
           var location = getLocation(lgas, states, zones, stockCount);
           var locationThresholds = void 0;
           if (location && location.level === 'zone') {
-            // Temporary fix for https://github.com/fielded/nav-integrated-national-dashboard/issues/265
-            // This should be removed when https://github.com/fielded/nav-etl/issues/136 is fixed
-            locationThresholds = _this2.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location._id], { version: 'last' });
+            locationThresholds = _this2.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location._id]);
           } else {
             locationThresholds = _this2.thresholdsService.calculateThresholds(location, stockCount, products);
           }
@@ -278,6 +252,7 @@
         return this.$q.all(promises).then(decorateStockCounts.bind(null, nonZoneStockCounts, zoneStockCounts));
       }
     }]);
+
     return StateIndicatorsService;
   }();
 
