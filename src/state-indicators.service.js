@@ -71,16 +71,18 @@ class StateIndicatorsService {
     let products
 
     const getLocation = (lgas, states, zones, stockCount) => {
-      const lga = stockCount.location.lga
-      const state = stockCount.location.state
-      if (lga) {
-        return find(lgas, (lgaDoc) => lgaDoc.id === lga)
-      } else if (state) {
-        return find(states, (stateDoc) => stateDoc.id === state)
-      } else {
-        const zone = stockCount.location.zone
-        return find(zones, (zoneDoc) => zoneDoc.id === zone)
+      if (!stockCount.location) {
+        return
       }
+      if (stockCount.location.national) { // TODO: make it work for national
+        return
+      }
+      const locationId = this.smartId.idify(stockCount.location, 'locationId')
+      let locations = zones
+      if (stockCount.location.state) {
+        locations = stockCount.location.lga ? lgas : states
+      }
+      return find(locations, (locationDoc) => locationDoc._id === locationId)
     }
 
     const decorateStockField = (requiredAllocations, stockCount) => {
