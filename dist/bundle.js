@@ -3,8 +3,6 @@
 
   angular = 'default' in angular ? angular['default'] : angular;
 
-  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
   var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
   function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -85,28 +83,21 @@
         var products = void 0;
 
         var getLocation = function getLocation(lgas, states, zones, stockCount) {
-          var lga = stockCount.location.lga;
-          var state = stockCount.location.state;
-          if (lga) {
-            return find(lgas, function (lgaDoc) {
-              return lgaDoc.id === lga;
-            });
-          } else if (state) {
-            return find(states, function (stateDoc) {
-              return stateDoc.id === state;
-            });
-          } else {
-            var _ret = function () {
-              var zone = stockCount.location.zone;
-              return {
-                v: find(zones, function (zoneDoc) {
-                  return zoneDoc.id === zone;
-                })
-              };
-            }();
-
-            if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+          if (!stockCount.location) {
+            return;
           }
+          if (stockCount.location.national) {
+            // TODO: make it work for national
+            return;
+          }
+          var locationId = _this2.smartId.idify(stockCount.location, 'locationId');
+          var locations = zones;
+          if (stockCount.location.state) {
+            locations = stockCount.location.lga ? lgas : states;
+          }
+          return find(locations, function (locationDoc) {
+            return locationDoc._id === locationId;
+          });
         };
 
         var decorateStockField = function decorateStockField(requiredAllocations, stockCount) {
