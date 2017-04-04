@@ -19,6 +19,7 @@ describe('state indicators service', function () {
     { _id: 'zone:nc:state:kogi', id: 'kogi', level: 'state' }
   ]
 
+  var national = { _id: 'national', id: 'national', level: 'national' }
   var zones = [
     { _id: 'zone:nc', id: 'nc', level: 'zone' }
   ]
@@ -63,6 +64,14 @@ describe('state indicators service', function () {
       location: { zone: 'nc' },
       stock: { 'product:a': 0, 'product:b': 11, 'product:c': 20, 'product:d': 40 },
       store: { type: 'zone' }
+    }
+  ]
+
+  var nationalStockCounts = [
+    {
+      location: { national: 'national' },
+      stock: { 'product:a': 1, 'product:b': 3, 'product:c': 10, 'product:d': 36 },
+      store: { type: 'national' }
     }
   ]
 
@@ -144,6 +153,11 @@ describe('state indicators service', function () {
       .service('zonesService', function ($q) {
         this.list = function () {
           return $q.when(zones)
+        }
+      })
+      .service('locationsService', function ($q) {
+        this.get = function () {
+          return $q.when(national)
         }
       })
       .service('productListService', function ($q) {
@@ -388,6 +402,30 @@ describe('state indicators service', function () {
         .then(function (decoratedStockCounts) {
           expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stockCounts[0], products)
           expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], stockCounts[1], products, requiredByState)
+          expect(decoratedStockCounts).toEqual(expected)
+        })
+      $rootScope.$digest()
+      done()
+    })
+    it('should work with national stock counts', function (done) {
+      var expected = [
+        {
+          location: { national: 'national' },
+          stock: {
+            'product:a': { amount: 1, status: 're-stock', allocation: 4, thresholds: thresholds['product:a'] },
+            'product:b': { amount: 3, status: 'ok', allocation: 10, thresholds: thresholds['product:b'] },
+            'product:c': { amount: 10, status: 'ok', allocation: 10, thresholds: thresholds['product:c'] },
+            'product:d': { amount: 36, status: 'overstock', allocation: -6, thresholds: thresholds['product:d'] }
+          },
+          reStockNeeded: true,
+          stockLevelStatus: 'kpi-ok',
+          store: { type: 'national' }
+        }
+      ]
+      var stockCounts = angular.copy(nationalStockCounts)
+      stateIndicatorsService.decorateWithIndicators(stockCounts)
+        .then(function (decoratedStockCounts) {
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(national, stockCounts[0], products)
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
