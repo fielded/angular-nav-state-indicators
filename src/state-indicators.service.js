@@ -71,18 +71,14 @@ class StateIndicatorsService {
     let states
     let zones
     let products
+    let national
 
     const getLocation = (lgas, states, zones, stockCount) => {
       if (!stockCount.location) {
         return
       }
-      let locationId
-      if (stockCount.location.national) {
-        locationId = 'national'
-      } else {
-        locationId = this.smartId.idify(stockCount.location, 'locationId')
-      }
-      
+      const locationId = this.smartId.idify(stockCount.location, 'locationId')
+
       let locations = zones
       if (stockCount.location.state) {
         locations = stockCount.location.lga ? lgas : states
@@ -91,7 +87,13 @@ class StateIndicatorsService {
     }
 
     const decorateStockField = (requiredAllocations, stockCount) => {
-      const location = getLocation(lgas, states, zones, stockCount)
+      let location
+      if (stockCount.location.national) {
+        location = national
+      } else {
+        location = getLocation(lgas, states, zones, stockCount)
+      }
+
       let locationThresholds
       if (location && location.level === 'zone') {
         locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location._id])
@@ -196,11 +198,16 @@ class StateIndicatorsService {
       return !isZoneStockCount(stockCount)
     }
 
+    const isNationalStockCount = (stockCount) => {
+      return (stockCount.location && stockCount.location.national)
+    }
+
     const decorateStockCounts = (nonZoneStockCounts, zoneStockCounts, promiseResults) => {
       lgas = promiseResults.lgas
       states = promiseResults.states
       zones = promiseResults.zones || [] // not available for the state dashboard
       products = promiseResults.products
+      national = promiseResults.national || []
 
       nonZoneStockCounts = nonZoneStockCounts
                             .map(decorateStockField.bind(null, null))
@@ -232,7 +239,7 @@ class StateIndicatorsService {
     if (zoneStockCounts.length) {
       promises.zones = this.zonesService.list()
     }
-    
+
     if (nationalStockCounts.length) {
       promises.national = this.locationsService.get('national')
     }
