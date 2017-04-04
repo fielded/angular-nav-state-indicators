@@ -45,7 +45,7 @@
   // TODO: make sure stock_statuses is availalbe
 
   var StateIndicatorsService = function () {
-    function StateIndicatorsService($q, smartId, STOCK_STATUSES, lgasService, statesService, zonesService, thresholdsService, productListService) {
+    function StateIndicatorsService($q, smartId, STOCK_STATUSES, lgasService, statesService, zonesService, locationsService, thresholdsService, productListService) {
       _classCallCheck(this, StateIndicatorsService);
 
       this.$q = $q;
@@ -54,6 +54,7 @@
       this.lgasService = lgasService;
       this.statesService = statesService;
       this.zonesService = zonesService;
+      this.locationsService = locationsService;
       this.thresholdsService = thresholdsService;
       this.productListService = productListService;
     }
@@ -81,16 +82,14 @@
         var states = void 0;
         var zones = void 0;
         var products = void 0;
+        var national = void 0;
 
         var getLocation = function getLocation(lgas, states, zones, stockCount) {
           if (!stockCount.location) {
             return;
           }
-          if (stockCount.location.national) {
-            // TODO: make it work for national
-            return;
-          }
           var locationId = _this2.smartId.idify(stockCount.location, 'locationId');
+
           var locations = zones;
           if (stockCount.location.state) {
             locations = stockCount.location.lga ? lgas : states;
@@ -101,7 +100,13 @@
         };
 
         var decorateStockField = function decorateStockField(requiredAllocations, stockCount) {
-          var location = getLocation(lgas, states, zones, stockCount);
+          var location = void 0;
+          if (stockCount.location.national) {
+            location = national;
+          } else {
+            location = getLocation(lgas, states, zones, stockCount);
+          }
+
           var locationThresholds = void 0;
           if (location && location.level === 'zone') {
             locationThresholds = _this2.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location._id]);
@@ -209,11 +214,16 @@
           return !isZoneStockCount(stockCount);
         };
 
+        var isNationalStockCount = function isNationalStockCount(stockCount) {
+          return stockCount.location && stockCount.location.national;
+        };
+
         var decorateStockCounts = function decorateStockCounts(nonZoneStockCounts, zoneStockCounts, promiseResults) {
           lgas = promiseResults.lgas;
           states = promiseResults.states;
           zones = promiseResults.zones || []; // not available for the state dashboard
           products = promiseResults.products;
+          national = promiseResults.national || [];
 
           nonZoneStockCounts = nonZoneStockCounts.map(decorateStockField.bind(null, null)).map(addReStockField);
           zoneStockCounts = zoneStockCounts.map(decorateStockField.bind(null, _this2.stateRequiredAllocationsByZone(nonZoneStockCounts))).map(addReStockField);
@@ -235,9 +245,14 @@
 
         var zoneStockCounts = stockCounts.filter(isZoneStockCount);
         var nonZoneStockCounts = stockCounts.filter(isNonZoneStockCount);
+        var nationalStockCounts = stockCounts.filter(isNationalStockCount);
 
         if (zoneStockCounts.length) {
           promises.zones = this.zonesService.list();
+        }
+
+        if (nationalStockCounts.length) {
+          promises.national = this.locationsService.get('national');
         }
 
         return this.$q.all(promises).then(decorateStockCounts.bind(null, nonZoneStockCounts, zoneStockCounts));
@@ -247,7 +262,7 @@
     return StateIndicatorsService;
   }();
 
-  StateIndicatorsService.$inject = ['$q', 'smartId', 'STOCK_STATUSES', 'lgasService', 'statesService', 'zonesService', 'thresholdsService', 'productListService'];
+  StateIndicatorsService.$inject = ['$q', 'smartId', 'STOCK_STATUSES', 'lgasService', 'statesService', 'zonesService', 'locationsService', 'thresholdsService', 'productListService'];
 
   angular.module('angularNavStateIndicators', ['ngSmartId', 'angularNavData', 'angularNavThresholds']).service('stateIndicatorsService', StateIndicatorsService);
 
