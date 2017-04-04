@@ -207,7 +207,7 @@ class StateIndicatorsService {
       states = promiseResults.states
       zones = promiseResults.zones || [] // not available for the state dashboard
       products = promiseResults.products
-      national = promiseResults.national || []
+      national = promiseResults.national || {}
 
       nonZoneStockCounts = nonZoneStockCounts
                             .map(decorateStockField.bind(null, null))
