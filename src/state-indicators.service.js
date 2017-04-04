@@ -40,6 +40,7 @@ class StateIndicatorsService {
     lgasService,
     statesService,
     zonesService,
+    locationsService,
     thresholdsService,
     productListService
   ) {
@@ -49,6 +50,7 @@ class StateIndicatorsService {
     this.lgasService = lgasService
     this.statesService = statesService
     this.zonesService = zonesService
+    this.locationsService = locationsService
     this.thresholdsService = thresholdsService
     this.productListService = productListService
   }
@@ -74,10 +76,13 @@ class StateIndicatorsService {
       if (!stockCount.location) {
         return
       }
-      if (stockCount.location.national) { // TODO: make it work for national
-        return
+      let locationId
+      if (stockCount.location.national) {
+        locationId = 'national'
+      } else {
+        locationId = this.smartId.idify(stockCount.location, 'locationId')
       }
-      const locationId = this.smartId.idify(stockCount.location, 'locationId')
+      
       let locations = zones
       if (stockCount.location.state) {
         locations = stockCount.location.lga ? lgas : states
@@ -222,9 +227,14 @@ class StateIndicatorsService {
 
     let zoneStockCounts = stockCounts.filter(isZoneStockCount)
     let nonZoneStockCounts = stockCounts.filter(isNonZoneStockCount)
+    let nationalStockCounts = stockCounts.filter(isNationalStockCount)
 
     if (zoneStockCounts.length) {
       promises.zones = this.zonesService.list()
+    }
+    
+    if (nationalStockCounts.length) {
+      promises.national = this.locationsService.get('national')
     }
 
     return this.$q
@@ -233,6 +243,6 @@ class StateIndicatorsService {
   }
 }
 
-StateIndicatorsService.$inject = ['$q', 'smartId', 'STOCK_STATUSES', 'lgasService', 'statesService', 'zonesService', 'thresholdsService', 'productListService']
+StateIndicatorsService.$inject = ['$q', 'smartId', 'STOCK_STATUSES', 'lgasService', 'statesService', 'zonesService', 'locationsService', 'thresholdsService', 'productListService']
 
 export default StateIndicatorsService
