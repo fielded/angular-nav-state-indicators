@@ -21,16 +21,6 @@ const productsGroupedByStatus = (stock, products) => {
   }, { understock: [], 're-stock': [], ok: [], overstock: [] })
 }
 
-const sumAllocations = (sum, stock) => {
-  return Object.keys(stock).reduce((total, product) => {
-    total[product] = total[product] || 0
-    if (stock[product].allocation > 0) {
-      total[product] += stock[product].allocation
-    }
-    return total
-  }, sum)
-}
-
 // TODO: make sure stock_statuses is availalbe
 class StateIndicatorsService {
   constructor (
@@ -53,17 +43,6 @@ class StateIndicatorsService {
     this.locationsService = locationsService
     this.thresholdsService = thresholdsService
     this.productListService = productListService
-  }
-
-  stateRequiredAllocationsByZone (stockCounts) {
-    return stockCounts.reduce((allocations, stockCount) => {
-      if (stockCount.location && stockCount.location.state && !stockCount.location.lga && stockCount.reStockNeeded) {
-        const zone = this.smartId.idify({ zone: stockCount.location.zone }, 'locationId')
-        allocations[zone] = allocations[zone] || {}
-        allocations[zone] = sumAllocations(allocations[zone], stockCount.stock)
-      }
-      return allocations
-    }, {})
   }
 
   decorateWithIndicators (stockCounts) {
