@@ -21,16 +21,6 @@ const productsGroupedByStatus = (stock, products) => {
   }, { understock: [], 're-stock': [], ok: [], overstock: [] })
 }
 
-const sumAllocations = (sum, stock) => {
-  return Object.keys(stock).reduce((total, product) => {
-    total[product] = total[product] || 0
-    if (stock[product].allocation > 0) {
-      total[product] += stock[product].allocation
-    }
-    return total
-  }, sum)
-}
-
 // TODO: make sure stock_statuses is availalbe
 class StateIndicatorsService {
   constructor (
@@ -55,17 +45,6 @@ class StateIndicatorsService {
     this.productListService = productListService
   }
 
-  stateRequiredAllocationsByZone (stockCounts) {
-    return stockCounts.reduce((allocations, stockCount) => {
-      if (stockCount.location && stockCount.location.state && !stockCount.location.lga && stockCount.reStockNeeded) {
-        const zone = this.smartId.idify({ zone: stockCount.location.zone }, 'locationId')
-        allocations[zone] = allocations[zone] || {}
-        allocations[zone] = sumAllocations(allocations[zone], stockCount.stock)
-      }
-      return allocations
-    }, {})
-  }
-
   decorateWithIndicators (stockCounts) {
     let lgas
     let states
@@ -86,7 +65,7 @@ class StateIndicatorsService {
       return find(locations, (locationDoc) => locationDoc._id === locationId)
     }
 
-    const decorateStockField = (requiredAllocations, stockCount) => {
+    const decorateStockField = stockCount => {
       let location
       if (stockCount.location.national) {
         location = national
@@ -94,12 +73,7 @@ class StateIndicatorsService {
         location = getLocation(lgas, states, zones, stockCount)
       }
 
-      let locationThresholds
-      if (location && location.level === 'zone') {
-        locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location._id])
-      } else {
-        locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products)
-      }
+      const locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products)
       const stock = stockCount.stock
 
       const decoratedStock = Object.keys(stock).reduce((decorated, product) => {
@@ -194,29 +168,22 @@ class StateIndicatorsService {
       return (stockCount.location && stockCount.location.zone && !stockCount.location.state)
     }
 
-    const isNonZoneStockCount = (stockCount) => {
-      return !isZoneStockCount(stockCount)
-    }
-
     const isNationalStockCount = (stockCount) => {
       return (stockCount.location && stockCount.location.national)
     }
 
-    const decorateStockCounts = (nonZoneStockCounts, zoneStockCounts, promiseResults) => {
+    const decorateStockCounts = (stockCounts, promiseResults) => {
       lgas = promiseResults.lgas
       states = promiseResults.states
       zones = promiseResults.zones || [] // not available for the state dashboard
       products = promiseResults.products
       national = promiseResults.national || {}
 
-      nonZoneStockCounts = nonZoneStockCounts
-                            .map(decorateStockField.bind(null, null))
-                            .map(addReStockField)
-      zoneStockCounts = zoneStockCounts
-                            .map(decorateStockField.bind(null, this.stateRequiredAllocationsByZone(nonZoneStockCounts)))
-                            .map(addReStockField)
+      stockCounts = stockCounts
+                      .map(decorateStockField)
+                      .map(addReStockField)
 
-      return nonZoneStockCounts.concat(zoneStockCounts)
+      return stockCounts
               .map(addStockLevelStatusField)
     }
 
@@ -233,7 +200,6 @@ class StateIndicatorsService {
     }
 
     let zoneStockCounts = stockCounts.filter(isZoneStockCount)
-    let nonZoneStockCounts = stockCounts.filter(isNonZoneStockCount)
     let nationalStockCounts = stockCounts.filter(isNationalStockCount)
 
     if (zoneStockCounts.length) {
@@ -246,7 +212,7 @@ class StateIndicatorsService {
 
     return this.$q
             .all(promises)
-            .then(decorateStockCounts.bind(null, nonZoneStockCounts, zoneStockCounts))
+            .then(decorateStockCounts.bind(null, stockCounts))
   }
 }
 

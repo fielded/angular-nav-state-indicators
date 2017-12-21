@@ -62,7 +62,7 @@ describe('state indicators service', function () {
   var zoneStockCounts = [
     {
       location: { zone: 'nc' },
-      stock: { 'product:a': 0, 'product:b': 11, 'product:c': 20, 'product:d': 40 },
+      stock: { 'product:a': 1, 'product:b': 3, 'product:c': 10, 'product:d': 36 },
       store: { type: 'zone' }
     }
   ]
@@ -189,97 +189,13 @@ describe('state indicators service', function () {
     productListService = _productListService_
     stateIndicatorsService = _stateIndicatorsService_
 
-    spyOn(thresholdsService, 'calculateThresholds').and.callFake(function (location, stockCount, products, requiredStateAllocation) {
+    spyOn(thresholdsService, 'calculateThresholds').and.callFake(function (location, stockCount, products) {
       if (!location) {
         return
-      }
-      if (location.level === 'zone' && requiredStateAllocation) {
-        return Object.keys(thresholds).reduce(function (zoneThresholds, product) {
-          zoneThresholds[product] = Object.keys(thresholds[product]).reduce(function (productThresholds, threshold) {
-            productThresholds[threshold] = thresholds[product][threshold]
-            if (requiredStateAllocation[product]) {
-              productThresholds[threshold] += requiredStateAllocation[product]
-            }
-            return productThresholds
-          }, {})
-          return zoneThresholds
-        }, {})
       }
       return thresholds
     })
   }))
-  describe('stateRequiredAllocationsByZone', function () {
-    it('adds up the required allocations for zone states', function () {
-      var decoratedStockCounts = [
-        {
-          location: { zone: 'foo', state: 'x' },
-          stock: {
-            'product:a': { allocation: 1 },
-            'product:b': { allocation: 1 },
-            'product:c': { allocation: 2 },
-            'product:d': { allocation: 2 }
-          },
-          reStockNeeded: true
-        },
-        {
-          location: { zone: 'foo', state: 'x', lga: 'a' },
-          stock: {
-            'product:a': { allocation: 3 },
-            'product:b': { allocation: 3 },
-            'product:c': { allocation: 4 },
-            'product:d': { allocation: 4 }
-          },
-          reStockNeeded: true
-        },
-        {
-          location: { zone: 'foo', state: 'y' },
-          stock: {
-            'product:a': { allocation: 5 },
-            'product:b': { allocation: 5 },
-            'product:c': { allocation: -6 },
-            'product:d': { allocation: -6 }
-          },
-          reStockNeeded: true
-        },
-        {
-          location: { zone: 'foo', state: 'z' },
-          stock: {
-            'product:a': { allocation: 1 },
-            'product:b': { allocation: 1 },
-            'product:c': { allocation: 1 },
-            'product:d': { allocation: 1 }
-          },
-          reStockNeeded: false
-        },
-        {
-          location: { zone: 'bar', state: 'w' },
-          stock: {
-            'product:a': { allocation: 7 },
-            'product:b': { allocation: 7 },
-            'product:c': { allocation: 8 },
-            'product:d': { allocation: 8 }
-          },
-          reStockNeeded: true
-        }
-      ]
-      var expected = {
-        'zone:foo': {
-          'product:a': 6,
-          'product:b': 6,
-          'product:c': 2,
-          'product:d': 2
-        },
-        'zone:bar': {
-          'product:a': 7,
-          'product:b': 7,
-          'product:c': 8,
-          'product:d': 8
-        }
-      }
-      var required = stateIndicatorsService.stateRequiredAllocationsByZone(decoratedStockCounts)
-      expect(required).toEqual(expected)
-    })
-  })
 
   describe('decorate with indicators', function () {
     it('works with lga stock counts', function (done) {
@@ -359,49 +275,24 @@ describe('state indicators service', function () {
     it('works with zone stock counts', function (done) {
       // The required allocation for zones is the one provided by the thresholds plus
       // the required allocation to zone state stores
-      var stockCounts = angular.copy(stateStockCounts).concat(angular.copy(zoneStockCounts))
-      var requiredByState = {
-        'product:a': 5,
-        'product:b': 10,
-        'product:c': 10,
-        'product:d': 0
-      }
-      var expectedZoneThresholds = {
-        'product:a': { min: 6, reOrder: 7, max: 10 },
-        'product:b': { min: 11, reOrder: 12, max: 20 },
-        'product:c': { min: 11, reOrder: 12, max: 30 },
-        'product:d': { min: 1, reOrder: 2, max: 30 }
-      }
+      var stockCounts = angular.copy(zoneStockCounts)
       var expected = [
-        {
-          location: { zone: 'nc', state: 'kogi' },
-          stock: {
-            'product:a': { amount: 0, status: 'understock', allocation: 5, thresholds: thresholds['product:a'] },
-            'product:b': { amount: 1, status: 're-stock', allocation: 10, thresholds: thresholds['product:b'] },
-            'product:c': { amount: 10, status: 'ok', allocation: 10, thresholds: thresholds['product:c'] },
-            'product:d': { amount: 40, status: 'overstock', allocation: -10, thresholds: thresholds['product:d'] }
-          },
-          reStockNeeded: true,
-          stockLevelStatus: 'kpi-warning',
-          store: { type: 'state' }
-        },
         {
           location: { zone: 'nc' },
           stock: {
-            'product:a': { amount: 0, status: 'understock', allocation: 10, thresholds: expectedZoneThresholds['product:a'] },
-            'product:b': { amount: 11, status: 're-stock', allocation: 10, thresholds: expectedZoneThresholds['product:b'] },
-            'product:c': { amount: 20, status: 'ok', allocation: 10, thresholds: expectedZoneThresholds['product:c'] },
-            'product:d': { amount: 40, status: 'overstock', allocation: -10, thresholds: expectedZoneThresholds['product:d'] }
+            'product:a': { amount: 1, status: 're-stock', allocation: 4, thresholds: thresholds['product:a'] },
+            'product:b': { amount: 3, status: 'ok', allocation: 10, thresholds: thresholds['product:b'] },
+            'product:c': { amount: 10, status: 'ok', allocation: 10, thresholds: thresholds['product:c'] },
+            'product:d': { amount: 36, status: 'overstock', allocation: -6, thresholds: thresholds['product:d'] }
           },
           reStockNeeded: true,
-          stockLevelStatus: 'kpi-warning',
+          stockLevelStatus: 'kpi-ok',
           store: { type: 'zone' }
         }
       ]
       stateIndicatorsService.decorateWithIndicators(stockCounts)
         .then(function (decoratedStockCounts) {
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stockCounts[0], products)
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], stockCounts[1], products, requiredByState)
+          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], stockCounts[0], products)
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
@@ -426,51 +317,6 @@ describe('state indicators service', function () {
       stateIndicatorsService.decorateWithIndicators(stockCounts)
         .then(function (decoratedStockCounts) {
           expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(national, stockCounts[0], products)
-          expect(decoratedStockCounts).toEqual(expected)
-        })
-      $rootScope.$digest()
-      done()
-    })
-    it('only considers states that need to be restocked when calculating zonal allocations', function (done) {
-      var noRestockStateStockCounts = [
-        {
-          location: { zone: 'nc', state: 'kogi' },
-          stock: { 'product:a': 5, 'product:b': 10, 'product:c': 20, 'product:d': 30 },
-          store: { type: 'state' }
-        }
-      ]
-
-      var stockCounts = noRestockStateStockCounts.concat(angular.copy(zoneStockCounts))
-      var expected = [
-        {
-          location: { zone: 'nc', state: 'kogi' },
-          stock: {
-            'product:a': { amount: 5, status: 'ok', allocation: 0, thresholds: thresholds['product:a'] },
-            'product:b': { amount: 10, status: 'ok', allocation: 0, thresholds: thresholds['product:b'] },
-            'product:c': { amount: 20, status: 'ok', allocation: 0, thresholds: thresholds['product:c'] },
-            'product:d': { amount: 30, status: 'ok', allocation: 0, thresholds: thresholds['product:d'] }
-          },
-          reStockNeeded: false,
-          stockLevelStatus: 'kpi-ok',
-          store: { type: 'state' }
-        },
-        {
-          location: { zone: 'nc' },
-          stock: {
-            'product:a': { amount: 0, status: 'understock', allocation: 5, thresholds: thresholds['product:a'] },
-            'product:b': { amount: 11, status: 'overstock', allocation: -1, thresholds: thresholds['product:b'] },
-            'product:c': { amount: 20, status: 'ok', allocation: 0, thresholds: thresholds['product:c'] },
-            'product:d': { amount: 40, status: 'overstock', allocation: -10, thresholds: thresholds['product:d'] }
-          },
-          reStockNeeded: true,
-          stockLevelStatus: 'kpi-warning',
-          store: { type: 'zone' }
-        }
-      ]
-      stateIndicatorsService.decorateWithIndicators(stockCounts)
-        .then(function (decoratedStockCounts) {
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(states[0], stockCounts[0], products)
-          expect(thresholdsService.calculateThresholds).toHaveBeenCalledWith(zones[0], stockCounts[1], products, undefined)
           expect(decoratedStockCounts).toEqual(expected)
         })
       $rootScope.$digest()
