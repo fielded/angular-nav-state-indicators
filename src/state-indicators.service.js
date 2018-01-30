@@ -66,7 +66,7 @@ class StateIndicatorsService {
     }, {})
   }
 
-  decorateWithIndicators (stockCounts) {
+  decorateWithIndicators (stockCounts, opts = {}) {
     let lgas
     let states
     let zones
@@ -86,7 +86,7 @@ class StateIndicatorsService {
       return find(locations, (locationDoc) => locationDoc._id === locationId)
     }
 
-    const decorateStockField = (requiredAllocations, stockCount) => {
+    const decorateStockField = (stockCount, requiredAllocations) => {
       let location
       if (stockCount.location.national) {
         location = national
@@ -95,7 +95,7 @@ class StateIndicatorsService {
       }
 
       let locationThresholds
-      if (location && location.level === 'zone') {
+      if (location && location.level === 'zone' && requiredAllocations) {
         locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location._id])
       } else {
         locationThresholds = this.thresholdsService.calculateThresholds(location, stockCount, products)
@@ -210,10 +210,15 @@ class StateIndicatorsService {
       national = promiseResults.national || {}
 
       nonZoneStockCounts = nonZoneStockCounts
-                            .map(decorateStockField.bind(null, null))
+                            .map(nonZoneStockCount => decorateStockField(nonZoneStockCount))
                             .map(addReStockField)
       zoneStockCounts = zoneStockCounts
-                            .map(decorateStockField.bind(null, this.stateRequiredAllocationsByZone(nonZoneStockCounts)))
+                            .map(zoneStockCount => {
+                              if (opts.requireChildAllocations === false) {
+                                return decorateStockField(zoneStockCount)
+                              }
+                              return decorateStockField(zoneStockCount, this.stateRequiredAllocationsByZone(nonZoneStockCounts))
+                            })
                             .map(addReStockField)
 
       return nonZoneStockCounts.concat(zoneStockCounts)

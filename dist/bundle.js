@@ -78,6 +78,8 @@
       value: function decorateWithIndicators(stockCounts) {
         var _this2 = this;
 
+        var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
         var lgas = void 0;
         var states = void 0;
         var zones = void 0;
@@ -99,7 +101,7 @@
           });
         };
 
-        var decorateStockField = function decorateStockField(requiredAllocations, stockCount) {
+        var decorateStockField = function decorateStockField(stockCount, requiredAllocations) {
           var location = void 0;
           if (stockCount.location.national) {
             location = national;
@@ -108,7 +110,7 @@
           }
 
           var locationThresholds = void 0;
-          if (location && location.level === 'zone') {
+          if (location && location.level === 'zone' && requiredAllocations) {
             locationThresholds = _this2.thresholdsService.calculateThresholds(location, stockCount, products, requiredAllocations[location._id]);
           } else {
             locationThresholds = _this2.thresholdsService.calculateThresholds(location, stockCount, products);
@@ -223,10 +225,17 @@
           states = promiseResults.states;
           zones = promiseResults.zones || []; // not available for the state dashboard
           products = promiseResults.products;
-          national = promiseResults.national || [];
+          national = promiseResults.national || {};
 
-          nonZoneStockCounts = nonZoneStockCounts.map(decorateStockField.bind(null, null)).map(addReStockField);
-          zoneStockCounts = zoneStockCounts.map(decorateStockField.bind(null, _this2.stateRequiredAllocationsByZone(nonZoneStockCounts))).map(addReStockField);
+          nonZoneStockCounts = nonZoneStockCounts.map(function (nonZoneStockCount) {
+            return decorateStockField(nonZoneStockCount);
+          }).map(addReStockField);
+          zoneStockCounts = zoneStockCounts.map(function (zoneStockCount) {
+            if (opts.requireChildAllocations === false) {
+              return decorateStockField(zoneStockCount);
+            }
+            return decorateStockField(zoneStockCount, _this2.stateRequiredAllocationsByZone(nonZoneStockCounts));
+          }).map(addReStockField);
 
           return nonZoneStockCounts.concat(zoneStockCounts).map(addStockLevelStatusField);
         };
