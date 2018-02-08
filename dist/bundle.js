@@ -118,7 +118,8 @@
           var stock = stockCount.stock;
 
           var decoratedStock = Object.keys(stock).reduce(function (decorated, product) {
-            var amount = stock[product];
+            // v2 stock count report
+            var amount = stock[product].amount;
             var status = void 0;
             var allocation = void 0;
             var productThresholds = void 0;

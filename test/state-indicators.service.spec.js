@@ -27,17 +27,17 @@ describe('state indicators service', function () {
   var lgaStockCounts = [
     {
       location: { zone: 'nc', state: 'kogi', lga: 'a' },
-      stock: { 'product:a': 1, 'product:b': 3, 'product:c': 10, 'product:d': 36 },
+      stock: { 'product:a': { amount: 1 }, 'product:b': { amount: 3 }, 'product:c': { amount: 10 }, 'product:d': { amount: 36 } },
       store: { type: 'lga' }
     },
     {
       location: { zone: 'nc', state: 'kogi', lga: 'b' },
-      stock: { 'product:a': 0, 'product:b': 0, 'product:c': 11, 'product:d': 30 },
+      stock: { 'product:a': { amount: 0 }, 'product:b': { amount: 0 }, 'product:c': { amount: 11 }, 'product:d': { amount: 30 } },
       store: { type: 'lga' }
     },
     {
       location: { zone: 'nc', state: 'kogi', lga: 'c' },
-      stock: { 'product:a': 0, 'product:b': 0, 'product:c': 0, 'product:d': 75 },
+      stock: { 'product:a': { amount: 0 }, 'product:b': { amount: 0 }, 'product:c': { amount: 0 }, 'product:d': { amount: 75 } },
       store: { type: 'lga' }
     },
     {
@@ -54,7 +54,7 @@ describe('state indicators service', function () {
   var stateStockCounts = [
     {
       location: { zone: 'nc', state: 'kogi' },
-      stock: { 'product:a': 0, 'product:b': 1, 'product:c': 10, 'product:d': 40 },
+      stock: { 'product:a': { amount: 0 }, 'product:b': { amount: 1 }, 'product:c': { amount: 10 }, 'product:d': { amount: 40 } },
       store: { type: 'state' }
     }
   ]
@@ -62,7 +62,7 @@ describe('state indicators service', function () {
   var zoneStockCounts = [
     {
       location: { zone: 'nc' },
-      stock: { 'product:a': 0, 'product:b': 11, 'product:c': 20, 'product:d': 40 },
+      stock: { 'product:a': { amount: 0 }, 'product:b': { amount: 11 }, 'product:c': { amount: 20 }, 'product:d': { amount: 40 } },
       store: { type: 'zone' }
     }
   ]
@@ -70,7 +70,7 @@ describe('state indicators service', function () {
   var nationalStockCounts = [
     {
       location: { national: 'national' },
-      stock: { 'product:a': 1, 'product:b': 3, 'product:c': 10, 'product:d': 36 },
+      stock: { 'product:a': { amount: 1 }, 'product:b': { amount: 3 }, 'product:c': { amount: 10 }, 'product:d': { amount: 36 } },
       store: { type: 'national' }
     }
   ]
@@ -435,7 +435,7 @@ describe('state indicators service', function () {
       var noRestockStateStockCounts = [
         {
           location: { zone: 'nc', state: 'kogi' },
-          stock: { 'product:a': 5, 'product:b': 10, 'product:c': 20, 'product:d': 30 },
+          stock: { 'product:a': { amount: 5 }, 'product:b': { amount: 10 }, 'product:c': { amount: 20 }, 'product:d': { amount: 30 } },
           store: { type: 'state' }
         }
       ]
@@ -482,7 +482,7 @@ describe('state indicators service', function () {
       })
       var unknownLgaStockCount = {
         location: { zone: 'nc', state: 'kogi', lga: 'unknown' },
-        stock: { 'product:a': 2, 'product:b': 3, 'product:c': 10, 'product:d': 20 },
+        stock: { 'product:a': { amount: 2 }, 'product:b': { amount: 3 }, 'product:c': { amount: 10 }, 'product:d': { amount: 20 } },
         store: { type: 'lga' }
       }
       var expected = [
@@ -512,7 +512,7 @@ describe('state indicators service', function () {
       it('is true for lgas if any product is below reorder level', function (done) {
         var noRestockNeeded = {
           location: { zone: 'nc', state: 'kogi', lga: 'b' },
-          stock: { 'product:a': 3, 'product:b': 3, 'product:c': 3, 'product:d': 3 },
+          stock: { 'product:a': { amount: 3 }, 'product:b': { amount: 3 }, 'product:c': { amount: 3 }, 'product:d': { amount: 3 } },
           store: { type: 'lga' }
         }
         var stockCounts = [angular.copy(lgaStockCounts[0]), noRestockNeeded]
@@ -527,12 +527,12 @@ describe('state indicators service', function () {
       it('is true for states if any product is below max level', function (done) {
         var reStockNeeded = {
           location: { zone: 'nc', state: 'kogi' },
-          stock: { 'product:a': 4, 'product:b': 9, 'product:c': 19, 'product:d': 29 },
+          stock: { 'product:a': { amount: 4 }, 'product:b': { amount: 9 }, 'product:c': { amount: 19 }, 'product:d': { amount: 29 } },
           store: { type: 'state' }
         }
         var noRestockNeeded = {
           location: { zone: 'nc', state: 'kogi' },
-          stock: { 'product:a': 10, 'product:b': 10, 'product:c': 20, 'product:d': 30 },
+          stock: { 'product:a': { amount: 10 }, 'product:b': { amount: 10 }, 'product:c': { amount: 20 }, 'product:d': { amount: 30 } },
           store: { type: 'state' }
         }
         var stockCounts = [reStockNeeded, noRestockNeeded]
@@ -547,12 +547,12 @@ describe('state indicators service', function () {
       it('is true for zones if any product is below max level', function (done) {
         var reStockNeeded = {
           location: { zone: 'nc' },
-          stock: { 'product:a': 4, 'product:b': 9, 'product:c': 19, 'product:d': 29 },
+          stock: { 'product:a': { amount: 4 }, 'product:b': { amount: 9 }, 'product:c': { amount: 19 }, 'product:d': { amount: 29 } },
           store: { type: 'zone' }
         }
         var noRestockNeeded = {
           location: { zone: 'nc' },
-          stock: { 'product:a': 10, 'product:b': 10, 'product:c': 20, 'product:d': 30 },
+          stock: { 'product:a': { amount: 10 }, 'product:b': { amount: 10 }, 'product:c': { amount: 20 }, 'product:d': { amount: 30 } },
           store: { type: 'zone' }
         }
         var stockCounts = [reStockNeeded, noRestockNeeded]

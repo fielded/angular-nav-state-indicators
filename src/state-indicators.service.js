@@ -103,7 +103,8 @@ class StateIndicatorsService {
       const stock = stockCount.stock
 
       const decoratedStock = Object.keys(stock).reduce((decorated, product) => {
-        let amount = stock[product]
+        // v2 stock count report
+        let amount = stock[product].amount
         let status
         let allocation
         let productThresholds
