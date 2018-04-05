@@ -104,7 +104,12 @@ class StateIndicatorsService {
 
       const decoratedStock = Object.keys(stock).reduce((decorated, product) => {
         // v2 stock count report
-        let amount = stock[product].amount
+        let amount = 0
+        if (!isNaN(parseInt(stock[product].amount, 10))) {
+          amount = stock[product].amount
+        } else if (!isNaN(parseInt(stock[product], 10))) {
+          amount = stock[product]
+        }
         let status
         let allocation
         let productThresholds
