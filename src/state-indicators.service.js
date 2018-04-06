@@ -73,6 +73,15 @@ class StateIndicatorsService {
     let products
     let national
 
+    const getStockAmount = (stock, product, amount = 0) => {
+      if (!isNaN(parseInt(stock[product].amount, 10))) {
+        amount = stock[product].amount
+      } else if (!isNaN(parseInt(stock[product], 10))) {
+        amount = stock[product]
+      }
+      return amount
+    }
+
     const getLocation = (lgas, states, zones, stockCount) => {
       if (!stockCount.location) {
         return
@@ -104,12 +113,7 @@ class StateIndicatorsService {
 
       const decoratedStock = Object.keys(stock).reduce((decorated, product) => {
         // v2 stock count report
-        let amount = 0
-        if (!isNaN(parseInt(stock[product].amount, 10))) {
-          amount = stock[product].amount
-        } else if (!isNaN(parseInt(stock[product], 10))) {
-          amount = stock[product]
-        }
+        const amount = getStockAmount(stock, product)
         let status
         let allocation
         let productThresholds
