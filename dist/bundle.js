@@ -86,6 +86,17 @@
         var products = void 0;
         var national = void 0;
 
+        var getStockAmount = function getStockAmount(stock, product) {
+          var amount = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+
+          if (!isNaN(parseInt(stock[product].amount, 10))) {
+            amount = stock[product].amount;
+          } else if (!isNaN(parseInt(stock[product], 10))) {
+            amount = stock[product];
+          }
+          return amount;
+        };
+
         var getLocation = function getLocation(lgas, states, zones, stockCount) {
           if (!stockCount.location) {
             return;
@@ -119,7 +130,7 @@
 
           var decoratedStock = Object.keys(stock).reduce(function (decorated, product) {
             // v2 stock count report
-            var amount = stock[product].amount;
+            var amount = getStockAmount(stock, product);
             var status = void 0;
             var allocation = void 0;
             var productThresholds = void 0;
