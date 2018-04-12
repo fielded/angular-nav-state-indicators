@@ -73,10 +73,11 @@ class StateIndicatorsService {
     let products
     let national
 
-    const getStockAmount = (stock, product, amount = 0) => {
-      if (!isNaN(parseInt(stock[product].amount, 10))) {
+    const getStockAmount = function (stock, product) {
+      var amount = 0
+      if (stock[product].amount && typeof stock[product].amount === 'number') {
         amount = stock[product].amount
-      } else if (!isNaN(parseInt(stock[product], 10))) {
+      } else if (typeof stock[product] === 'number' || !isNaN(parseInt(stock[product], 10))) {
         amount = stock[product]
       }
       return amount
