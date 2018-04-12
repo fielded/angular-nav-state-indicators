@@ -88,10 +88,12 @@
 
         var getStockAmount = function getStockAmount(stock, product) {
           var amount = 0;
-          if (stock[product].amount && typeof stock[product].amount === 'number') {
-            amount = stock[product].amount;
-          } else if (typeof stock[product] === 'number' || !isNaN(parseInt(stock[product], 10))) {
-            amount = stock[product];
+          if (stock[product]) {
+            if (stock[product].amount && typeof stock[product].amount === 'number') {
+              amount = stock[product].amount;
+            } else if (typeof stock[product] === 'number' || !isNaN(parseInt(stock[product], 10))) {
+              amount = stock[product];
+            }
           }
           return amount;
         };
