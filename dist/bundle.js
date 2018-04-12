@@ -87,11 +87,10 @@
         var national = void 0;
 
         var getStockAmount = function getStockAmount(stock, product) {
-          var amount = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
-
-          if (!isNaN(parseInt(stock[product].amount, 10))) {
+          var amount = 0;
+          if (stock[product].amount && typeof stock[product].amount === 'number') {
             amount = stock[product].amount;
-          } else if (!isNaN(parseInt(stock[product], 10))) {
+          } else if (typeof stock[product] === 'number' || !isNaN(parseInt(stock[product], 10))) {
             amount = stock[product];
           }
           return amount;
